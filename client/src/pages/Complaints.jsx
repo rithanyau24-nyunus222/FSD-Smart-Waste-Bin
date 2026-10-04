@@ -1,87 +1,79 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { StatusBadge, PriorityBadge, Timeline } from '../components.jsx';
 import { apiFetch } from '../api.jsx';
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
 
-/* =====================================================
-   MY COMPLAINTS (CITIZEN LIST VIEW)
-   ===================================================== */
 export const MyComplaints = () => {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchMyComplaints = async () => {
+    const fetchReports = async () => {
       try {
         const data = await apiFetch('/complaints');
         setComplaints(data || []);
       } catch (err) {
-        setError(err.message || 'Failed to load complaints');
+        console.error('Failed to fetch user complaints:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchMyComplaints();
+    fetchReports();
   }, []);
 
   return (
-    <div className="container" style={{ padding: '20px 20px 60px 20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+    <div className="container" style={{ maxWidth: '960px', padding: '40px 20px 80px 20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <h1 style={{ fontSize: '2rem' }}>My Reported Bins</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Track real-time progress and collection history</p>
+          <h1 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-heading)', color: '#fff' }}>
+            My Incident Reports
+          </h1>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.88rem' }}>
+            Track live resolution audit history and sanitation truck dispatches.
+          </p>
         </div>
-        <Link to="/report" className="btn-primary">
-          ➕ New Report
+        <Link to="/report" className="btn-primary" style={{ padding: '8px 18px', fontSize: '0.88rem' }}>
+          + New Report
         </Link>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <p>Loading your reports...</p>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+          Loading your active reports...
         </div>
-      ) : error ? (
-        <div className="alert-box alert-danger">{error}</div>
       ) : complaints.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
-          <span style={{ fontSize: '3rem', display: 'block', marginBottom: '12px' }}>🌿</span>
-          <h3>No Reports Yet</h3>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>
-            You haven't reported any overflowing bins yet. Help keep the city clean!
+        <div className="glass-card" style={{ textAlign: 'center', padding: '50px 20px' }}>
+          <span style={{ fontSize: '40px', display: 'block', marginBottom: '12px' }}>🌱</span>
+          <h3 style={{ color: '#fff', marginBottom: '8px' }}>No Active Incident Reports</h3>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '20px' }}>
+            Your neighborhood is clean! If you spot an overflowing public bin, submit a report to alert GCC.
           </p>
           <Link to="/report" className="btn-primary">
             Report an Overflowing Bin
           </Link>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
-          {complaints.map((item) => (
-            <Link key={item._id} to={`/complaints/${item._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '0', overflow: 'hidden' }}>
-                {item.photo ? (
-                  <img src={item.photo} alt="Reported bin" style={{ width: '100%', height: '180px', objectFit: 'cover' }} />
-                ) : (
-                  <div style={{ width: '100%', height: '140px', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem' }}>
-                    🗑️
-                  </div>
-                )}
-                <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                      <StatusBadge status={item.status} />
-                      <PriorityBadge priority={item.priority} />
-                    </div>
-                    <p style={{ fontWeight: '600', fontSize: '0.95rem', color: 'var(--navy)', marginBottom: '10px', lineHeight: 1.4 }}>
-                      {item.description}
-                    </p>
-                  </div>
-                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    <span>{item.bin?.code || 'Nearby Bin'}</span>
-                    <span>{new Date(item.createdAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {complaints.map((c) => (
+            <Link
+              key={c._id}
+              to={`/complaints/${c._id}`}
+              className="glass-card"
+              style={{ display: 'block', padding: '20px', transition: 'var(--transition-fast)' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span className={`status-chip ${c.status.toLowerCase().replace(' ', '-')}`}>
+                  {c.status}
+                </span>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  Logged on {new Date(c.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+              <div style={{ fontWeight: '600', fontSize: '1.05rem', color: '#fff', marginBottom: '6px' }}>
+                "{c.description}"
+              </div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>
+                📍 Near: {c.bin?.address || 'Chennai'} ({c.bin?.area || 'Ward Area'})
               </div>
             </Link>
           ))}
@@ -91,14 +83,10 @@ export const MyComplaints = () => {
   );
 };
 
-/* =====================================================
-   COMPLAINT DETAIL (WITH VERTICAL TIMELINE)
-   ===================================================== */
 export const ComplaintDetail = () => {
   const { id } = useParams();
   const [complaint, setComplaint] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -106,7 +94,7 @@ export const ComplaintDetail = () => {
         const data = await apiFetch(`/complaints/${id}`);
         setComplaint(data);
       } catch (err) {
-        setError(err.message || 'Failed to load complaint detail');
+        console.error('Failed to load complaint detail:', err);
       } finally {
         setLoading(false);
       }
@@ -116,125 +104,130 @@ export const ComplaintDetail = () => {
 
   if (loading) {
     return (
-      <div className="container" style={{ textAlign: 'center', padding: '60px 0' }}>
-        <p>Loading complaint details...</p>
+      <div className="container" style={{ textAlign: 'center', padding: '100px 0', color: 'var(--text-muted)' }}>
+        Retrieving incident audit trail...
       </div>
     );
   }
 
-  if (error || !complaint) {
+  if (!complaint) {
     return (
-      <div className="container" style={{ maxWidth: '640px', padding: '40px 20px' }}>
-        <div className="alert-box alert-danger">{error || 'Complaint not found.'}</div>
-        <Link to="/my-complaints" className="btn-secondary">
-          ← Back to Reports
+      <div className="container" style={{ textAlign: 'center', padding: '80px 20px' }}>
+        <h2 style={{ color: '#fff' }}>Incident Report Not Found</h2>
+        <Link to="/my-complaints" className="btn-secondary" style={{ marginTop: '16px' }}>
+          Back to Reports
         </Link>
       </div>
     );
   }
 
-  const [lng, lat] = complaint.location?.coordinates || [80.2707, 13.0827];
+  const steps = [
+    { label: 'Reported', done: true },
+    { label: 'Verified by GCC', done: ['Verified', 'Assigned', 'In Progress', 'Collected'].includes(complaint.status) },
+    { label: 'Truck Dispatched', done: ['Assigned', 'In Progress', 'Collected'].includes(complaint.status) },
+    { label: 'Cleaned & Certified', done: complaint.status === 'Collected' }
+  ];
+
+  const pos = complaint.location?.coordinates ? [complaint.location.coordinates[1], complaint.location.coordinates[0]] : [13.0827, 80.2707];
 
   return (
-    <div className="container" style={{ maxWidth: '860px', padding: '20px 20px 60px 20px' }}>
-      <div style={{ marginBottom: '16px' }}>
-        <Link to="/my-complaints" style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-          ← Back to My Reports
-        </Link>
-      </div>
+    <div className="container" style={{ maxWidth: '860px', padding: '40px 20px 80px 20px' }}>
+      <Link to="/my-complaints" style={{ color: 'var(--accent-cyan)', fontSize: '0.85rem', display: 'inline-block', marginBottom: '16px' }}>
+        ← Back to Incident List
+      </Link>
 
-      <div className="card" style={{ marginBottom: '24px' }}>
-        {/* Header Badges & Date */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <StatusBadge status={complaint.status} />
-            <PriorityBadge priority={complaint.priority} />
+      <div className="glass-card" style={{ marginBottom: '24px' }}>
+        {/* Progress Tracker Bar */}
+        <div style={{ marginBottom: '28px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', marginBottom: '10px' }}>
+            <div
+              style={{
+                position: 'absolute',
+                top: '14px',
+                left: '20px',
+                right: '20px',
+                height: '3px',
+                background: 'rgba(255,255,255,0.08)',
+                zIndex: 1
+              }}
+            ></div>
+            {steps.map((st, i) => (
+              <div key={st.label} style={{ zIndex: 2, textAlign: 'center', width: '90px' }}>
+                <div
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    background: st.done ? 'var(--accent-emerald)' : 'var(--bg-dark)',
+                    border: `2px solid ${st.done ? 'var(--accent-emerald)' : 'var(--border-subtle)'}`,
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 6px auto',
+                    fontWeight: '700',
+                    fontSize: '0.78rem',
+                    boxShadow: st.done ? '0 0 12px rgba(16,185,129,0.5)' : 'none'
+                  }}
+                >
+                  {st.done ? '✓' : i + 1}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: st.done ? '#fff' : 'var(--text-muted)', fontWeight: st.done ? '600' : '400' }}>
+                  {st.label}
+                </div>
+              </div>
+            ))}
           </div>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Logged on: {new Date(complaint.createdAt).toLocaleString()}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <h2 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-heading)', color: '#fff', marginBottom: '4px' }}>
+              "{complaint.description}"
+            </h2>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>
+              📍 {complaint.bin?.address} ({complaint.bin?.area})
+            </div>
+          </div>
+          <span className={`status-chip ${complaint.status.toLowerCase().replace(' ', '-')}`}>
+            {complaint.status}
           </span>
         </div>
 
-        <h1 style={{ fontSize: '1.6rem', color: 'var(--navy)', marginBottom: '16px' }}>
-          {complaint.description}
-        </h1>
-
-        {/* Photo Display */}
-        {complaint.photo ? (
-          <div style={{ marginBottom: '20px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-color)', maxHeight: '380px' }}>
-            <img src={complaint.photo} alt="Reported Bin" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          </div>
-        ) : (
-          <div style={{ padding: '24px', background: '#F8FAFC', borderRadius: '12px', textAlign: 'center', color: 'var(--text-muted)', marginBottom: '20px', border: '1px dashed var(--border-color)' }}>
-            📷 No photo attached for this report
-          </div>
-        )}
-
-        {/* Rejection notice if rejected */}
-        {complaint.status === 'Rejected' && (
-          <div className="alert-box alert-danger" style={{ marginBottom: '20px' }}>
-            <div>
-              <strong>Report Rejected by Municipal Authority</strong>
-              <p style={{ marginTop: '4px', fontSize: '0.9rem' }}>Reason: {complaint.rejectReason}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Metadata Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px', background: '#F8FAFC', padding: '16px', borderRadius: '12px' }}>
-          <div>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>Reported By</span>
-            <strong>{complaint.reporter?.name}</strong>
-          </div>
-          <div>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>Severity</span>
-            <strong style={{ textTransform: 'capitalize' }}>{complaint.severity}</strong>
-          </div>
-          <div>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>Linked Smart Bin</span>
-            <strong>{complaint.bin ? `${complaint.bin.code} (${complaint.bin.area})` : 'Independent Location'}</strong>
-          </div>
-          {complaint.bin && (
-            <div>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>Bin Fill Status</span>
-              <strong>{complaint.bin.fillLevel}% full</strong>
+        {/* Photo & Map Pin Row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginTop: '20px' }}>
+          {complaint.photo && (
+            <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-subtle)', height: '180px' }}>
+              <img src={complaint.photo} alt="Field Evidence" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           )}
-        </div>
 
-        {/* Map Location Preview */}
-        <div style={{ marginBottom: '24px' }}>
-          <h3 style={{ fontSize: '1.1rem', marginBottom: '8px' }}>Location Pin</h3>
-          <div style={{ height: '240px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-            <MapContainer
-              center={[lat, lng]}
-              zoom={15}
-              scrollWheelZoom={false}
-              style={{ height: '100%', width: '100%' }}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <CircleMarker
-                center={[lat, lng]}
-                radius={10}
-                pathOptions={{ color: '#1B0A4F', fillColor: '#D6455D', fillOpacity: 0.9, weight: 2 }}
-              >
-                <Popup>
-                  <strong>Report Location</strong>
-                  <br />
-                  {lat.toFixed(5)}, {lng.toFixed(5)}
-                </Popup>
-              </CircleMarker>
+          <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-subtle)', height: '180px' }}>
+            <MapContainer center={pos} zoom={14} style={{ width: '100%', height: '100%' }} zoomControl={false}>
+              <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+              <CircleMarker center={pos} radius={10} pathOptions={{ color: '#fff', fillColor: '#06B6D4', fillOpacity: 0.9, weight: 2 }} />
             </MapContainer>
           </div>
         </div>
 
-        {/* Vertical Audit Timeline */}
-        <div>
-          <h3 style={{ fontSize: '1.2rem', marginBottom: '12px' }}>Resolution Timeline</h3>
-          <Timeline history={complaint.history} />
+        {/* Vertical Audit Trail */}
+        <div style={{ marginTop: '28px' }}>
+          <h4 style={{ fontSize: '0.95rem', color: '#fff', marginBottom: '14px' }}>
+            Live Audit History &amp; Chain of Custody
+          </h4>
+          <div className="timeline-track">
+            {(complaint.history || []).map((h, idx) => (
+              <div key={idx} className="timeline-node">
+                <div className={`timeline-dot ${idx === 0 ? 'done' : ''}`}></div>
+                <div style={{ fontWeight: '600', color: '#fff', fontSize: '0.88rem' }}>
+                  {h.status}: {h.note || 'State transition recorded'}
+                </div>
+                <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  By: {h.by?.name || 'Municipal Officer'} · {new Date(h.at).toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

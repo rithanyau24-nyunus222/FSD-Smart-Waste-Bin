@@ -1,575 +1,613 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { StatusBadge, PriorityBadge, MapView } from '../components.jsx';
+import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../api.jsx';
+import { CityMap, PredictiveGauge } from '../components.jsx';
 
 export const Dashboard = () => {
-  const [stats, setStats] = useState(null);
-  const [complaints, setComplaints] = useState([]);
   const [bins, setBins] = useState([]);
+  const [complaints, setComplaints] = useState([]);
   const [collectors, setCollectors] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [simulating, setSimulating] = useState(false);
-  const [toastMsg, setToastMsg] = useState('');
 
-  // Filters
-  const [statusFilter, setStatusFilter] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState('');
+  // Filter & tab controls
+  const [activeTab, setActiveTab] = useState('incidents'); // incidents | bins | fleet
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [priorityFilter, setPriorityFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedItem, setSelectedItem] = useState(null);
 
-  // Modals state
-  const [verifyModal, setVerifyModal] = useState({ open: false, complaint: null, priority: 'medium' });
+  // Modals
+  const [verifyModal, setVerifyModal] = useState({ open: false, complaint: null, priority: 'high' });
   const [rejectModal, setRejectModal] = useState({ open: false, complaint: null, reason: '' });
-  const [assignModal, setAssignModal] = useState({ open: false, complaint: null, collectorId: '' });
+  const [dispatchModal, setDispatchModal] = useState({ open: false, complaint: null, collectorId: '' });
 
-  const loadDashboardData = useCallback(async () => {
+  // Simulation state
+  const [simLevel, setSimLevel] = useState(50);
+  const [simulating, setSimulating] = useState(false);
+
+  const fetchInitialData = async () => {
     try {
       setLoading(true);
-      const [statsData, binsData, collectorsData] = await Promise.all([
+      const [statsData, binsData, complaintsData, collectorsData] = await Promise.all([
         apiFetch('/stats'),
         apiFetch('/bins'),
+        apiFetch('/complaints'),
         apiFetch('/users/collectors')
       ]);
 
       setStats(statsData);
       setBins(binsData || []);
+      setComplaints(complaintsData || []);
       setCollectors(collectorsData || []);
+      if (binsData && binsData.length > 0) {
+        setSelectedItem(binsData[0]);
+      }
     } catch (err) {
-      console.error('Dashboard load error:', err.message);
+      console.error('Failed to load dashboard:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchInitialData();
   }, []);
 
-  const loadComplaints = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (statusFilter) params.append('status', statusFilter);
-      if (priorityFilter) params.append('priority', priorityFilter);
-      if (searchQuery.trim()) params.append('search', searchQuery.trim());
-
-      const data = await apiFetch(`/complaints?${params.toString()}`);
-      setComplaints(data || []);
-    } catch (err) {
-      console.error('Complaints load error:', err.message);
-    }
-  }, [statusFilter, priorityFilter, searchQuery]);
-
-  useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
-
-  useEffect(() => {
-    loadComplaints();
-  }, [loadComplaints]);
-
-  // Simulate Sensor readings
-  const handleSimulate = async () => {
+  // Run IoT Sensor Simulation
+  const handleSimulate = async (multiplier = 1) => {
     try {
       setSimulating(true);
       const res = await apiFetch('/bins/simulate', { method: 'POST' });
-      setToastMsg(res.message || 'Sensor readings simulated successfully!');
-      loadDashboardData();
-      loadComplaints();
-      setTimeout(() => setToastMsg(''), 4000);
+      if (res?.bins) {
+        setBins(res.bins);
+      }
+      const updatedStats = await apiFetch('/stats');
+      setStats(updatedStats);
     } catch (err) {
-      alert(`Simulation error: ${err.message}`);
+      console.error('Simulation error:', err);
     } finally {
       setSimulating(false);
     }
   };
 
-  // Verify complaint
-  const handleVerifySubmit = async (e) => {
-    e.preventDefault();
+  // Action: Verify complaint
+  const handleVerify = async () => {
     if (!verifyModal.complaint) return;
     try {
-      await apiFetch(`/complaints/${verifyModal.complaint._id}/verify`, {
+      const updated = await apiFetch(`/complaints/${verifyModal.complaint._id}/verify`, {
         method: 'PATCH',
         body: { priority: verifyModal.priority }
       });
-      setVerifyModal({ open: false, complaint: null, priority: 'medium' });
-      loadDashboardData();
-      loadComplaints();
+      setComplaints((prev) => prev.map((c) => (c._id === updated._id ? updated : c)));
+      setVerifyModal({ open: false, complaint: null, priority: 'high' });
+      const updatedStats = await apiFetch('/stats');
+      setStats(updatedStats);
     } catch (err) {
-      alert(`Verify error: ${err.message}`);
+      alert('Verification failed: ' + err.message);
     }
   };
 
-  // Reject complaint
-  const handleRejectSubmit = async (e) => {
-    e.preventDefault();
+  // Action: Reject complaint
+  const handleReject = async () => {
     if (!rejectModal.complaint || !rejectModal.reason.trim()) {
-      alert('Rejection reason is required.');
+      alert('Please specify a rejection reason');
       return;
     }
     try {
-      await apiFetch(`/complaints/${rejectModal.complaint._id}/reject`, {
+      const updated = await apiFetch(`/complaints/${rejectModal.complaint._id}/reject`, {
         method: 'PATCH',
-        body: { reason: rejectModal.reason.trim() }
+        body: { reason: rejectModal.reason }
       });
+      setComplaints((prev) => prev.map((c) => (c._id === updated._id ? updated : c)));
       setRejectModal({ open: false, complaint: null, reason: '' });
-      loadDashboardData();
-      loadComplaints();
+      const updatedStats = await apiFetch('/stats');
+      setStats(updatedStats);
     } catch (err) {
-      alert(`Reject error: ${err.message}`);
+      alert('Rejection failed: ' + err.message);
     }
   };
 
-  // Assign task
-  const handleAssignSubmit = async (e) => {
-    e.preventDefault();
-    if (!assignModal.complaint || !assignModal.collectorId) {
-      alert('Please select a collector.');
+  // Action: Dispatch task to collector
+  const handleDispatch = async () => {
+    if (!dispatchModal.complaint || !dispatchModal.collectorId) {
+      alert('Please select a collection officer');
       return;
     }
     try {
       await apiFetch('/tasks', {
         method: 'POST',
         body: {
-          complaintId: assignModal.complaint._id,
-          collectorId: assignModal.collectorId
+          complaintId: dispatchModal.complaint._id,
+          collectorId: dispatchModal.collectorId
         }
       });
-      setAssignModal({ open: false, complaint: null, collectorId: '' });
-      loadDashboardData();
-      loadComplaints();
+      // Refresh complaints list
+      const fresh = await apiFetch('/complaints');
+      setComplaints(fresh || []);
+      setDispatchModal({ open: false, complaint: null, collectorId: '' });
+      const updatedStats = await apiFetch('/stats');
+      setStats(updatedStats);
     } catch (err) {
-      alert(`Assign error: ${err.message}`);
+      alert('Dispatch failed: ' + err.message);
     }
   };
 
-  if (loading && !stats) {
-    return (
-      <div className="container" style={{ textAlign: 'center', padding: '60px 0' }}>
-        <p>Loading Authority Operations Dashboard...</p>
-      </div>
-    );
-  }
+  // Filter complaints
+  const filteredComplaints = complaints.filter((c) => {
+    if (statusFilter !== 'All' && c.status.toLowerCase() !== statusFilter.toLowerCase()) return false;
+    if (priorityFilter !== 'All' && c.priority?.toLowerCase() !== priorityFilter.toLowerCase()) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const desc = (c.description || '').toLowerCase();
+      const addr = (c.bin?.address || '').toLowerCase();
+      const area = (c.bin?.area || '').toLowerCase();
+      if (!desc.includes(q) && !addr.includes(q) && !area.includes(q)) return false;
+    }
+    return true;
+  });
 
-  // Max value calculation for CSS bar chart
-  const maxDayCount = Math.max(...(stats?.last7Days?.map((d) => d.count) || [1]), 1);
+  const criticalCount = bins.filter((b) => b.fillLevel >= 80).length;
+  const pendingCount = complaints.filter((c) => c.status === 'Pending').length;
+  const activeCount = complaints.filter((c) => ['Assigned', 'In Progress'].includes(c.status)).length;
+  const collectedCount = complaints.filter((c) => c.status === 'Collected').length;
 
   return (
-    <div className="container" style={{ padding: '20px 20px 60px 20px' }}>
-      {/* Toast Banner */}
-      {toastMsg && (
-        <div className="alert-box alert-success" style={{ position: 'sticky', top: '80px', zIndex: 999 }}>
-          📡 {toastMsg}
-        </div>
-      )}
+    <div className="command-viewport">
+      {/* LEFT SIDEBAR: OPERATIONS & TELEMETRY STREAM */}
+      <aside className="command-sidebar">
+        {/* KPI Telemetry Header */}
+        <div className="telemetry-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ fontSize: '1.15rem', color: '#fff', fontFamily: 'var(--font-heading)' }}>
+                Command &amp; Dispatch OS
+              </h2>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                Live Stream · Greater Chennai Corporation
+              </span>
+            </div>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '3px 9px',
+                borderRadius: 'var(--radius-full)',
+                background: 'rgba(16, 185, 129, 0.15)',
+                color: 'var(--accent-emerald)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                fontSize: '0.72rem',
+                fontWeight: '700'
+              }}
+            >
+              <span className="radar-pulse green"></span> LIVE TELEMETRY
+            </span>
+          </div>
 
-      {/* Header with Title and Simulate Button */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <h1 style={{ fontSize: '2.2rem' }}>Municipal Command Center</h1>
-          <p style={{ color: 'var(--text-muted)' }}>City-wide bin fill telemetry, report verification &amp; task dispatch</p>
-        </div>
-
-        <button
-          onClick={handleSimulate}
-          disabled={simulating}
-          className="btn-accent"
-          style={{ padding: '12px 24px', fontSize: '0.95rem' }}
-        >
-          {simulating ? 'Simulating...' : '📡 Simulate Sensor Fill Readings'}
-        </button>
-      </div>
-
-      {/* Key Metric Stats Cards */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon stat-icon-gold">⏳</div>
-          <div className="stat-data">
-            <span className="stat-value">{stats?.statusCounts?.pending || 0}</span>
-            <span className="stat-label">Pending Verification</span>
+          <div className="telemetry-row">
+            <div className="stat-metric">
+              <div className="stat-metric-num" style={{ color: 'var(--accent-rose)' }}>{criticalCount}</div>
+              <div className="stat-metric-label">Critical &gt;80%</div>
+            </div>
+            <div className="stat-metric">
+              <div className="stat-metric-num" style={{ color: 'var(--accent-amber)' }}>{pendingCount}</div>
+              <div className="stat-metric-label">Pending Triage</div>
+            </div>
+            <div className="stat-metric">
+              <div className="stat-metric-num" style={{ color: 'var(--accent-purple)' }}>{activeCount}</div>
+              <div className="stat-metric-label">In Transit</div>
+            </div>
+            <div className="stat-metric">
+              <div className="stat-metric-num" style={{ color: 'var(--accent-emerald)' }}>{collectedCount}</div>
+              <div className="stat-metric-label">Resolved</div>
+            </div>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-icon stat-icon-blue">✓</div>
-          <div className="stat-data">
-            <span className="stat-value">{stats?.statusCounts?.verified || 0}</span>
-            <span className="stat-label">Verified (Unassigned)</span>
+        {/* IoT Simulation Control Card */}
+        <div className="sim-controls-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontWeight: '700', fontSize: '0.82rem', color: 'var(--accent-cyan)' }}>
+              ⚡ IoT Sensor Simulation Hub
+            </span>
+            <button
+              type="button"
+              onClick={() => handleSimulate()}
+              disabled={simulating}
+              className="btn-cyan"
+              style={{ padding: '4px 12px', fontSize: '0.75rem', borderRadius: 'var(--radius-full)' }}
+            >
+              {simulating ? 'Pulsing...' : '📡 Inject Telemetry'}
+            </button>
+          </div>
+          <p style={{ fontSize: '0.74rem', color: 'var(--text-dim)', marginBottom: '10px' }}>
+            Test live triggers, overflow alarms, and map radar pings across all 12 smart sensors:
+          </p>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button
+              type="button"
+              onClick={() => handleSimulate(0.8)}
+              className="btn-secondary"
+              style={{ flex: 1, padding: '5px', fontSize: '0.72rem' }}
+            >
+              🟢 Normal Load
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSimulate(1.3)}
+              className="btn-secondary"
+              style={{ flex: 1, padding: '5px', fontSize: '0.72rem' }}
+            >
+              🟡 Rush Hour (+25%)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSimulate(2.0)}
+              className="btn-secondary"
+              style={{ flex: 1, padding: '5px', fontSize: '0.72rem' }}
+            >
+              🔴 Monsoon Overflow
+            </button>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-icon stat-icon-purple">🚛</div>
-          <div className="stat-data">
-            <span className="stat-value">{stats?.statusCounts?.inProgress || 0}</span>
-            <span className="stat-label">In Progress</span>
-          </div>
+        {/* Navigation Tabs */}
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', padding: '0 24px' }}>
+          <button
+            type="button"
+            onClick={() => setActiveTab('incidents')}
+            style={{
+              padding: '12px 14px',
+              borderBottom: activeTab === 'incidents' ? '2px solid var(--accent-cyan)' : '2px solid transparent',
+              color: activeTab === 'incidents' ? '#fff' : 'var(--text-muted)',
+              fontWeight: '600',
+              fontSize: '0.84rem'
+            }}
+          >
+            🚨 Incident Queue ({filteredComplaints.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('bins')}
+            style={{
+              padding: '12px 14px',
+              borderBottom: activeTab === 'bins' ? '2px solid var(--accent-cyan)' : '2px solid transparent',
+              color: activeTab === 'bins' ? '#fff' : 'var(--text-muted)',
+              fontWeight: '600',
+              fontSize: '0.84rem'
+            }}
+          >
+            🗑️ 12 Smart Bins
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('fleet')}
+            style={{
+              padding: '12px 14px',
+              borderBottom: activeTab === 'fleet' ? '2px solid var(--accent-cyan)' : '2px solid transparent',
+              color: activeTab === 'fleet' ? '#fff' : 'var(--text-muted)',
+              fontWeight: '600',
+              fontSize: '0.84rem'
+            }}
+          >
+            🚛 Sanitation Fleet ({collectors.length})
+          </button>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-icon stat-icon-green">✨</div>
-          <div className="stat-data">
-            <span className="stat-value">{stats?.statusCounts?.collected || 0}</span>
-            <span className="stat-label">Cleared &amp; Collected</span>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon stat-icon-red">🚨</div>
-          <div className="stat-data">
-            <span className="stat-value">{stats?.fullBins || 0}</span>
-            <span className="stat-label">Critical Bins (&gt;80%)</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 7-Day Activity Bar Chart (CSS-Only) */}
-      <div className="chart-card" style={{ marginBottom: '32px' }}>
-        <div className="chart-header">
-          <div>
-            <h3 style={{ fontSize: '1.2rem' }}>Complaints Activity (Last 7 Days)</h3>
-            <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Daily volume of citizen reports logged</span>
-          </div>
-          <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--primary-green)' }}>Real-Time Log</span>
-        </div>
-
-        <div className="chart-bars-container">
-          {(stats?.last7Days || []).map((day, idx) => {
-            const heightPercent = Math.max((day.count / maxDayCount) * 100, 6);
-            return (
-              <div key={idx} className="chart-bar-col">
-                <span className="chart-bar-value">{day.count}</span>
-                <div className="chart-bar" style={{ height: `${heightPercent}%` }}></div>
-                <span className="chart-bar-label">{day.label}</span>
+        {/* TAB 1: INCIDENTS QUEUE */}
+        {activeTab === 'incidents' && (
+          <>
+            {/* Search & Filter Controls */}
+            <div style={{ padding: '14px 24px 8px 24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <input
+                type="text"
+                placeholder="Search incidents by address or note..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="form-input"
+                style={{ padding: '8px 12px', fontSize: '0.82rem' }}
+              />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="form-select"
+                  style={{ flex: 1, padding: '6px 10px', fontSize: '0.78rem' }}
+                >
+                  <option value="All">All Statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Verified">Verified</option>
+                  <option value="Assigned">Assigned</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Collected">Collected</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+                <select
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  className="form-select"
+                  style={{ flex: 1, padding: '6px 10px', fontSize: '0.78rem' }}
+                >
+                  <option value="All">All Priorities</option>
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
               </div>
-            );
-          })}
-        </div>
-      </div>
+            </div>
 
-      {/* Interactive Map View */}
-      <div style={{ marginBottom: '36px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <div>
-            <h3 style={{ fontSize: '1.3rem' }}>Live City Waste &amp; Sensor Telemetry Map</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Bins: <span style={{ color: '#D6455D', fontWeight: '700' }}>● Red (&gt;80%)</span>,{' '}
-              <span style={{ color: '#E0A100', fontWeight: '700' }}>● Amber (&gt;50%)</span>,{' '}
-              <span style={{ color: '#1F7A5A', fontWeight: '700' }}>● Green (&lt;50%)</span> | Incident Reports: 🔵 Blue
-            </p>
-          </div>
-        </div>
-        <MapView bins={bins} complaints={complaints} height="420px" />
-      </div>
-
-      {/* Complaints Management Table & Filter Strip */}
-      <div className="card" style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
-          <h3 style={{ fontSize: '1.3rem' }}>Complaints Ledger &amp; Dispatch Queue</h3>
-
-          {/* Filters */}
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <select
-              className="form-control"
-              style={{ width: 'auto', padding: '8px 12px', fontSize: '0.85rem' }}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="">All Statuses</option>
-              <option value="Pending">Pending</option>
-              <option value="Verified">Verified</option>
-              <option value="Assigned">Assigned</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Collected">Collected</option>
-              <option value="Rejected">Rejected</option>
-            </select>
-
-            <select
-              className="form-control"
-              style={{ width: 'auto', padding: '8px 12px', fontSize: '0.85rem' }}
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-            >
-              <option value="">All Priorities</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
-            </select>
-
-            <input
-              type="text"
-              className="form-control"
-              style={{ width: '180px', padding: '8px 12px', fontSize: '0.85rem' }}
-              placeholder="Search description..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Desktop Table View */}
-        <div className="desktop-table-view table-responsive">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th>Location / Area</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {complaints.length === 0 ? (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: '30px' }}>
-                    No complaints match current filters.
-                  </td>
-                </tr>
+            {/* Incident List */}
+            <div className="incident-list">
+              {filteredComplaints.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+                  No reports matching filter criteria
+                </div>
               ) : (
-                complaints.map((c) => (
-                  <tr key={c._id}>
-                    <td style={{ maxWidth: '280px' }}>
-                      <Link to={`/complaints/${c._id}`} style={{ fontWeight: '600', color: 'var(--navy)' }}>
-                        {c.description.slice(0, 70)}
-                        {c.description.length > 70 ? '...' : ''}
-                      </Link>
-                    </td>
-                    <td>
-                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                        {c.bin ? `${c.bin.code} (${c.bin.area})` : 'Pinned Location'}
-                      </span>
-                    </td>
-                    <td>
-                      <PriorityBadge priority={c.priority} />
-                    </td>
-                    <td>
-                      <StatusBadge status={c.status} />
-                    </td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      {new Date(c.createdAt).toLocaleDateString()}
-                    </td>
-                    <td>
-                      <div className="action-buttons">
+                filteredComplaints.map((c) => {
+                  const isSelected = selectedItem?._id === c._id;
+                  return (
+                    <div
+                      key={c._id}
+                      className={`incident-card ${isSelected ? 'active-selected' : ''}`}
+                      onClick={() => setSelectedItem(c)}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span className={`status-chip ${c.status.toLowerCase().replace(' ', '-')}`}>
+                          {c.status}
+                        </span>
+                        {c.priority && (
+                          <span className={`priority-pill ${c.priority.toLowerCase()}`}>
+                            {c.priority}
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ fontWeight: '600', fontSize: '0.88rem', color: '#fff', marginBottom: '6px', lineHeight: '1.4' }}>
+                        "{c.description}"
+                      </div>
+
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '10px' }}>
+                        📍 {c.bin?.address || 'Reported Location'} ({c.bin?.area || 'Chennai'})
+                      </div>
+
+                      {/* Quick Action Buttons for Authority */}
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                         {c.status === 'Pending' && (
                           <>
                             <button
-                              className="btn-action btn-verify"
-                              onClick={() => setVerifyModal({ open: true, complaint: c, priority: c.priority })}
+                              type="button"
+                              className="btn-cyan"
+                              style={{ flex: 1, padding: '5px', fontSize: '0.75rem' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setVerifyModal({ open: true, complaint: c, priority: 'high' });
+                              }}
                             >
-                              Verify
+                              ✓ Verify
                             </button>
                             <button
-                              className="btn-action btn-reject"
-                              onClick={() => setRejectModal({ open: true, complaint: c, reason: '' })}
+                              type="button"
+                              className="btn-danger"
+                              style={{ flex: 1, padding: '5px', fontSize: '0.75rem' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRejectModal({ open: true, complaint: c, reason: '' });
+                              }}
                             >
-                              Reject
+                              ✕ Reject
                             </button>
                           </>
                         )}
+
                         {c.status === 'Verified' && (
                           <button
-                            className="btn-action btn-assign"
-                            onClick={() => setAssignModal({ open: true, complaint: c, collectorId: collectors[0]?._id || '' })}
+                            type="button"
+                            className="btn-primary"
+                            style={{ width: '100%', padding: '6px', fontSize: '0.78rem' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDispatchModal({ open: true, complaint: c, collectorId: collectors[0]?._id || '' });
+                            }}
                           >
-                            Assign Collector
+                            🚛 Dispatch Sanitation Truck
                           </button>
                         )}
-                        <Link to={`/complaints/${c._id}`} className="btn-action" style={{ background: '#F1F5F9', color: 'var(--navy)' }}>
-                          View
-                        </Link>
                       </div>
-                    </td>
-                  </tr>
-                ))
+                    </div>
+                  );
+                })
               )}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </>
+        )}
 
-        {/* Mobile Cards View (<768px) */}
-        <div className="mobile-cards-view">
-          {complaints.length === 0 ? (
-            <p style={{ textAlign: 'center', padding: '20px' }}>No complaints match current filters.</p>
-          ) : (
-            complaints.map((c) => (
-              <div key={c._id} className="mobile-table-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <StatusBadge status={c.status} />
-                  <PriorityBadge priority={c.priority} />
-                </div>
-                <Link to={`/complaints/${c._id}`} style={{ fontWeight: '600', color: 'var(--navy)' }}>
-                  {c.description}
-                </Link>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                  {c.bin ? `${c.bin.code} (${c.bin.area})` : 'Pinned Location'} • {new Date(c.createdAt).toLocaleDateString()}
-                </div>
-                <div className="action-buttons" style={{ marginTop: '8px' }}>
-                  {c.status === 'Pending' && (
-                    <>
-                      <button
-                        className="btn-action btn-verify"
-                        onClick={() => setVerifyModal({ open: true, complaint: c, priority: c.priority })}
-                      >
-                        Verify
-                      </button>
-                      <button
-                        className="btn-action btn-reject"
-                        onClick={() => setRejectModal({ open: true, complaint: c, reason: '' })}
-                      >
-                        Reject
-                      </button>
-                    </>
-                  )}
-                  {c.status === 'Verified' && (
-                    <button
-                      className="btn-action btn-assign"
-                      onClick={() => setAssignModal({ open: true, complaint: c, collectorId: collectors[0]?._id || '' })}
+        {/* TAB 2: SMART BINS TELEMETRY */}
+        {activeTab === 'bins' && (
+          <div className="incident-list">
+            {bins.map((bin) => {
+              const isSelected = selectedItem?._id === bin._id;
+              const isCritical = bin.fillLevel >= 80;
+              return (
+                <div
+                  key={bin._id}
+                  className={`incident-card ${isSelected ? 'active-selected' : ''}`}
+                  onClick={() => setSelectedItem(bin)}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className={`radar-pulse ${isCritical ? 'red' : bin.fillLevel >= 50 ? 'amber' : 'green'}`}></span>
+                      <strong style={{ color: '#fff', fontSize: '0.9rem' }}>{bin.code}</strong>
+                    </div>
+                    <span
+                      style={{
+                        fontWeight: '800',
+                        fontSize: '0.82rem',
+                        color: isCritical ? 'var(--accent-rose)' : bin.fillLevel >= 50 ? 'var(--accent-amber)' : 'var(--accent-emerald)'
+                      }}
                     >
-                      Assign
-                    </button>
-                  )}
-                  <Link to={`/complaints/${c._id}`} className="btn-action" style={{ background: '#F1F5F9', color: 'var(--navy)' }}>
-                    View
-                  </Link>
+                      {bin.fillLevel}% FULL
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '8px' }}>
+                    {bin.address} ({bin.area})
+                  </div>
+
+                  <PredictiveGauge fillLevel={bin.fillLevel} />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* TAB 3: SANITATION FLEET */}
+        {activeTab === 'fleet' && (
+          <div className="incident-list">
+            {collectors.map((col) => (
+              <div key={col._id} className="incident-card">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(245, 158, 11, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                    🚛
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '700', color: '#fff', fontSize: '0.9rem' }}>{col.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Assigned Area: {col.area}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: '0.76rem', color: 'var(--accent-emerald)' }}>
+                  ● Active On Shift · Route Proximity Optimized
                 </div>
               </div>
-            ))
-          )}
-        </div>
-      </div>
+            ))}
+          </div>
+        )}
+      </aside>
 
-      {/* Verify Modal */}
+      {/* RIGHT WORKSPACE: FULL GIS CITY MAP */}
+      <main className="command-map-area">
+        <CityMap
+          bins={bins}
+          complaints={complaints}
+          selectedItem={selectedItem}
+          onSelectBin={(item) => setSelectedItem(item)}
+        />
+      </main>
+
+      {/* VERIFY MODAL */}
       {verifyModal.open && (
-        <div className="modal-backdrop">
-          <div className="modal-dialog">
-            <div className="modal-header">
-              <h3>Verify Complaint</h3>
-              <button className="btn-close-modal" onClick={() => setVerifyModal({ open: false, complaint: null, priority: 'medium' })}>
-                ✕
+        <div className="modal-backdrop" onClick={() => setVerifyModal({ open: false, complaint: null, priority: 'high' })}>
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '10px' }}>Verify Incident &amp; Assign Priority</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '16px' }}>
+              "{verifyModal.complaint?.description}"
+            </p>
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                Priority Classification:
+              </label>
+              <select
+                value={verifyModal.priority}
+                onChange={(e) => setVerifyModal((prev) => ({ ...prev, priority: e.target.value }))}
+                className="form-select"
+              >
+                <option value="critical">🔴 Critical (Immediate Hazard / Blockage)</option>
+                <option value="high">🟡 High (Commercial &amp; High Footfall)</option>
+                <option value="medium">🔵 Medium (Standard Ward Overflow)</option>
+                <option value="low">🟢 Low (Routine Clearance)</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setVerifyModal({ open: false, complaint: null, priority: 'high' })}
+              >
+                Cancel
+              </button>
+              <button type="button" className="btn-cyan" onClick={handleVerify}>
+                Confirm Verification
               </button>
             </div>
-            <form onSubmit={handleVerifySubmit}>
-              <p style={{ fontSize: '0.9rem', marginBottom: '14px' }}>
-                Confirm verification for report: <strong>"{verifyModal.complaint?.description}"</strong>
-              </p>
-              <div className="form-group">
-                <label>Assign / Override Priority</label>
-                <select
-                  className="form-control"
-                  value={verifyModal.priority}
-                  onChange={(e) => setVerifyModal({ ...verifyModal, priority: e.target.value })}
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="critical">Critical</option>
-                </select>
-              </div>
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setVerifyModal({ open: false, complaint: null, priority: 'medium' })}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary">
-                  Confirm Verification
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
 
-      {/* Reject Modal */}
+      {/* REJECT MODAL */}
       {rejectModal.open && (
-        <div className="modal-backdrop">
-          <div className="modal-dialog">
-            <div className="modal-header">
-              <h3>Reject Complaint</h3>
-              <button className="btn-close-modal" onClick={() => setRejectModal({ open: false, complaint: null, reason: '' })}>
-                ✕
+        <div className="modal-backdrop" onClick={() => setRejectModal({ open: false, complaint: null, reason: '' })}>
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.2rem', color: 'var(--accent-rose)', marginBottom: '10px' }}>Reject Incident Report</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '16px' }}>
+              "{rejectModal.complaint?.description}"
+            </p>
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                Mandatory Rejection Rationale (Visible to Citizen):
+              </label>
+              <textarea
+                rows="3"
+                value={rejectModal.reason}
+                onChange={(e) => setRejectModal((prev) => ({ ...prev, reason: e.target.value }))}
+                placeholder="e.g. Debris is private property demolition waste. Please contact GCC C&D toll-free."
+                className="form-textarea"
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setRejectModal({ open: false, complaint: null, reason: '' })}
+              >
+                Cancel
+              </button>
+              <button type="button" className="btn-danger" onClick={handleReject}>
+                Confirm Rejection
               </button>
             </div>
-            <form onSubmit={handleRejectSubmit}>
-              <p style={{ fontSize: '0.9rem', marginBottom: '14px' }}>
-                State why this report cannot be addressed (will be sent to citizen):
-              </p>
-              <div className="form-group">
-                <label>Rejection Reason *</label>
-                <textarea
-                  className="form-control"
-                  placeholder="e.g. Duplicate report, private plot debris, or not municipal waste..."
-                  required
-                  value={rejectModal.reason}
-                  onChange={(e) => setRejectModal({ ...rejectModal, reason: e.target.value })}
-                />
-              </div>
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setRejectModal({ open: false, complaint: null, reason: '' })}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn-danger">
-                  Confirm Rejection
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
 
-      {/* Assign Modal */}
-      {assignModal.open && (
-        <div className="modal-backdrop">
-          <div className="modal-dialog">
-            <div className="modal-header">
-              <h3>Assign Task to Sanitation Collector</h3>
-              <button className="btn-close-modal" onClick={() => setAssignModal({ open: false, complaint: null, collectorId: '' })}>
-                ✕
+      {/* DISPATCH MODAL */}
+      {dispatchModal.open && (
+        <div className="modal-backdrop" onClick={() => setDispatchModal({ open: false, complaint: null, collectorId: '' })}>
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '10px' }}>Dispatch Sanitation Truck</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '16px' }}>
+              Assign incident at <strong>{dispatchModal.complaint?.bin?.address || 'Chennai'}</strong> to a sanitation worker:
+            </p>
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                Select Sanitation Officer:
+              </label>
+              <select
+                value={dispatchModal.collectorId}
+                onChange={(e) => setDispatchModal((prev) => ({ ...prev, collectorId: e.target.value }))}
+                className="form-select"
+              >
+                {collectors.map((col) => (
+                  <option key={col._id} value={col._id}>
+                    🚛 {col.name} — Area: {col.area}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setDispatchModal({ open: false, complaint: null, collectorId: '' })}
+              >
+                Cancel
+              </button>
+              <button type="button" className="btn-primary" onClick={handleDispatch}>
+                Dispatch Truck
               </button>
             </div>
-            <form onSubmit={handleAssignSubmit}>
-              <p style={{ fontSize: '0.9rem', marginBottom: '14px' }}>
-                Dispatch task for: <strong>"{assignModal.complaint?.description}"</strong>
-              </p>
-              <div className="form-group">
-                <label>Select Sanitation Worker</label>
-                <select
-                  className="form-control"
-                  required
-                  value={assignModal.collectorId}
-                  onChange={(e) => setAssignModal({ ...assignModal, collectorId: e.target.value })}
-                >
-                  <option value="">-- Choose Collector --</option>
-                  {collectors.map((col) => (
-                    <option key={col._id} value={col._id}>
-                      {col.name} ({col.area || 'Zone Worker'})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setAssignModal({ open: false, complaint: null, collectorId: '' })}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary">
-                  Dispatch Task
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
     </div>
   );
 };
-
-export default Dashboard;
