@@ -132,7 +132,7 @@ export default function Login() {
           }}
         >
           <div>
-            Logged in as <strong>{user.name}</strong> ({user.role.toUpperCase()})
+            Logged in as <strong>{user?.name || 'Rithanya'}</strong> ({user?.role ? user.role.toUpperCase() : 'CITIZEN'})
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
