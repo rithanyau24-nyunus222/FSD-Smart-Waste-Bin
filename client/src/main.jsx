@@ -1,17 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { HashRouter } from 'react-router-dom';
-import 'leaflet/dist/leaflet.css';
-import './styles.css';
+import '@fontsource/peace-sans';
 import App from './App.jsx';
-import { AuthProvider } from './api.jsx';
+import './styles.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <HashRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </HashRouter>
+    <App />
   </React.StrictMode>
 );

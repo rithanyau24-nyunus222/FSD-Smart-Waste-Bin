@@ -1,176 +1,144 @@
-# Smart Waste Bin Monitoring & Collection System
+# Smart Waste & Bin Management System
 
-> **Tagline:** *"Keep It Clean, Keep It Smart."*
-
-[![Live Demo](https://img.shields.io/badge/Live%20Website-GitHub%20Pages-success?style=for-the-badge&logo=github)](https://rithanyau24-nyunus222.github.io/FSD-Smart-Waste-Bin/)
-[![Deploy to GitHub Pages](https://github.com/rithanyau24-nyunus222/FSD-Smart-Waste-Bin/actions/workflows/deploy.yml/badge.svg)](https://github.com/rithanyau24-nyunus222/FSD-Smart-Waste-Bin/actions/workflows/deploy.yml)
-
-🌐 **Live Website:** [https://rithanyau24-nyunus222.github.io/FSD-Smart-Waste-Bin/](https://rithanyau24-nyunus222.github.io/FSD-Smart-Waste-Bin/)
-
-A full-stack MERN web application developed as a College Full Stack Development project that connects citizens, municipal authorities, and waste collectors to transform urban waste management from delayed, untracked complaints into a transparent, prioritized, and closed-loop process.
+A full-stack, real-time civic waste management platform connecting Citizens, Waste Collectors, and Municipal Authorities to monitor, report, and clear smart bins across Chennai with automated duplicate detection, photo verification, and status tracking.
 
 ---
 
-## 1. Problem & Solution
+## Features by Role
 
-- **The Problem:** In urban centers, public waste bins frequently overflow. Citizens lack an effortless way to report them, municipal authorities lack real-time visibility, and garbage collection follows rigid, inefficient routes that overlook overflowing bins.
-- **The Solution:** A unified digital platform enabling citizens to report overflowing bins in under a minute with compressed photos and geolocation, empowering authorities with real-time dashboard analytics and sensor simulation to assign tasks, and equipping collectors with dynamic task lists to mark collections completed.
+### 1. Citizen (`/citizen`)
+- **Interactive Bin Map & Picker**: View 15 real-time smart bins across Chennai with dynamic fill-level indicators.
+- **Smart Waste Reporting**: Report overflowing bins with client-side image compression (<120 KB) and canvas location tagging.
+- **Duplicate Detection & Merging**: Automatically merges duplicate complaints for the same bin within active hours to reduce clutter.
+- **Live Timeline Tracking**: Track complaint lifecycle (Reported → Assigned → In Progress → Cleared).
+- **In-App Notifications**: Real-time alerts when complaints are updated or resolved.
 
----
+### 2. Waste Collector (`/collector`)
+- **Route Optimization**: Visualized route progress bar and ordered bin collection queue.
+- **Task Management**: Real-time assignment list with pickup priority and distance indicators.
+- **After-Photo Verification**: Upload timestamped "after" photos to document clean-up completion.
+- **Automated Lifecycle Update**: Completing a task automatically marks the linked complaint as cleared and updates bin fill levels.
 
-## 2. Features by Role
-
-### 👤 Citizen
-- Instant incident reporting with in-browser compressed photo upload (< 150 KB) and interactive map pin placement.
-- Duplicate detection warning for reports within 30 meters.
-- Personal complaints dashboard with status badges and an interactive vertical audit timeline.
-- Real-time in-app notification center.
-
-### 🏛️ Municipal Authority
-- Comprehensive operations dashboard with key performance metrics (Pending, Verified, In Progress, Collected, Critical fill bins).
-- CSS-rendered 7-day complaint activity bar chart.
-- Multi-criteria filterable complaints ledger (Status, Priority, Search).
-- Single-click verification with priority adjustment and rejection workflow with mandatory reason.
-- Collector dispatch modal.
-- Interactive Leaflet city map displaying sensor fill levels (Green < 50%, Amber 50-80%, Red > 80%).
-- "Simulate Sensor" feature to emulate live IoT bin level telemetry.
-
-### 🚛 Waste Collector
-- Mobile-responsive collection queue with priority indicators and incident photos.
-- Direct Google Maps routing integration for rapid navigation.
-- Simple state transitions: "Start Collection" (*In Progress*) and "Mark Collected" (*Collected*), resetting linked bin fill levels to 5%.
+### 3. Municipal Authority (`/authority`)
+- **Live Bento Command Dashboard**: Real-time key metrics, critical overflow alerts, and interactive multi-bin radar map.
+- **Priority Complaints Queue**: Inspect, reassign, or force-resolve issues with instant collector assignment.
+- **SHA-256 Photo Deduplication Gallery**: Deduplicated photo repository storing identical photos only once.
+- **Bin Fleet Management**: Full audit trail of fill levels, battery stats, and sensor alerts.
 
 ---
 
-## 3. Technology Stack
+## Tech Stack
 
-- **Frontend:** React 18, Vite, React Router DOM 6, React Leaflet / Leaflet (CircleMarker), Vanilla CSS (custom design system, Baloo 2 + Poppins fonts, keyframe animations).
-- **Backend:** Node.js, Express.js (ES Modules), Multer (file uploads), JWT authentication, Bcrypt.js.
-- **Database:** MongoDB, Mongoose with 2dsphere geospatial indexing.
-- **Dev Tooling:** Concurrently for unified full-stack dev execution.
+- **Frontend**: React 18, Vite, React Router DOM, Custom Design System (Strict UI-1 Token Palette: Green House, Paper White, Sprout, Electric Pink, Periwinkle Blue), Peace Sans & Geologica Typography, Leaflet / Custom Canvas Maps.
+- **Backend**: Node.js, Express (REST API), JSON Web Tokens (JWT), Multer, Sharp (Image compression).
+- **Database**: MongoDB with Mongoose (Users, Bins, Complaints, Tasks, Notifications, Photos).
 
 ---
 
-## 4. Folder Structure (Lean 25 Files Architecture)
+## Folder Structure
 
 ```
-smart-waste-bin-system/
-├── package.json
-├── .gitignore
-├── README.md
+smart-waste-bin/
+├── package.json              # Monorepo build and start scripts
+├── .gitignore                # Ignores node_modules, dist, .env
+├── README.md                 # Deployment & setup documentation
 ├── server/
-│   ├── package.json
-│   ├── .env.example
-│   ├── uploads/
-│   │   └── .gitkeep
-│   └── src/
-│       ├── index.js
-│       ├── models.js
-│       ├── middleware.js
-│       ├── routes.js
-│       └── seed.js
+│   ├── index.js              # Express app, API routes, static production hosting
+│   ├── middleware.js         # JWT auth, role guard, error handling
+│   ├── models.js             # Mongoose schemas (User, Bin, Complaint, Task, Notification, Photo)
+│   ├── seed.js               # Seed script for demo bins, users, and complaints
+│   ├── routes/
+│   │   ├── auth.js           # Auth routes (login, register, me)
+│   │   ├── complaints.js     # Citizen complaint intake and listing
+│   │   └── work.js           # Collector tasks & authority fleet management
+│   └── package.json
 └── client/
+    ├── index.html            # Entry HTML with custom typography
+    ├── vite.config.js        # Vite build config & dev proxy
     ├── package.json
-    ├── index.html
-    ├── vite.config.js
     └── src/
-        ├── main.jsx
-        ├── App.jsx
-        ├── api.jsx
-        ├── components.jsx
-        ├── styles.css
+        ├── main.jsx          # React DOM root
+        ├── App.jsx           # Role-based protected routes
+        ├── auth.jsx          # AuthProvider context
+        ├── api.js            # Axios client with JWT interceptor
+        ├── styles.css        # Full design system & token definitions
+        ├── components.jsx    # Design system primitives & SVG illustrations
         └── pages/
-            ├── Home.jsx
-            ├── Auth.jsx
-            ├── Report.jsx
-            ├── Complaints.jsx
-            ├── Dashboard.jsx
-            └── Tasks.jsx
+            ├── Login.jsx            # Split-hero authentication screen
+            ├── Citizen.jsx          # Citizen reporting & live timeline
+            ├── Authority.jsx        # Bento dashboard & fleet control
+            ├── Collector.jsx        # Task execution & after-photo flow
+            └── ComplaintDetail.jsx  # Two-column complaint audit view
 ```
 
 ---
 
-## 5. Demo Accounts
+## Environment Variables
 
-All demo accounts share the password: `Demo@123`
+Create a `.env` file in `server/` (or configure via Render dashboard):
 
-| Role | Email | Purpose |
-| :--- | :--- | :--- |
-| **Citizen** | `citizen@demo.com` | Report bins, view timeline & notifications |
-| **Authority** | `authority@demo.com` | View dashboard, verify, reject, assign tasks, simulate sensors |
-| **Collector** | `collector@demo.com` | View assigned tasks, start & collect waste |
-| **Collector 2** | `collector2@demo.com` | Secondary sanitation worker |
-| **Collector 3** | `collector3@demo.com` | Tertiary sanitation worker |
-
----
-
-## 6. API Reference
-
-Base URL: `/api`
-
-### Authentication
-- `POST /auth/register` - Register a new citizen account
-- `POST /auth/login` - Authenticate and receive 7-day JWT
-- `GET /auth/me` - Retrieve current authenticated profile
-
-### Complaints
-- `POST /complaints` - Create a complaint (citizen, multipart/form-data)
-- `GET /complaints` - Query complaints (citizen: own; authority: all with filters)
-- `GET /complaints/:id` - Fetch complaint detail with timeline history
-- `PATCH /complaints/:id/verify` - Verify complaint and set priority (authority)
-- `PATCH /complaints/:id/reject` - Reject complaint with reason (authority)
-
-### Tasks
-- `POST /tasks` - Assign verified complaint to a collector (authority)
-- `GET /tasks` - List tasks (collector: own; authority: all)
-- `PATCH /tasks/:id/status` - Update task progress to `in_progress` or `collected` (collector)
-
-### Smart Bins
-- `GET /bins` - List all city bins with current fill levels
-- `POST /bins/simulate` - Simulate sensor telemetry updates (authority)
-
-### Analytics & Notifications
-- `GET /stats` - Authority analytics and 7-day trend
-- `GET /stats/public` - Public aggregate statistics
-- `GET /notifications` - Retrieve user notifications
-- `PATCH /notifications/read` - Mark notifications as read
-- `GET /users/collectors` - List available collectors (authority)
+```env
+PORT=5000
+MONGODB_URI=mongodb://127.0.0.1:27017/smart-waste
+JWT_SECRET=demo_jwt_secret_key_chennai_waste_2026
+COLLECTOR_CODE=COLLECT-2026
+NODE_ENV=development
+```
 
 ---
 
-## 7. Setup & Execution
+## How to Run Locally
 
-### Prerequisites
-- Node.js (v18+)
-- MongoDB running locally at `mongodb://127.0.0.1:27017` or a MongoDB Atlas URI
+Run the system locally in two simple commands:
 
-### Installation & Run
+### Command 1: Seed the Database
+Populates 15 Chennai smart bins, 8 realistic complaints, tasks, notifications, and demo accounts:
+```bash
+node server/seed.js
+```
 
-1. **Install all dependencies across root, server, and client:**
-   ```bash
-   npm run install:all
-   ```
-
-2. **Configure environment:**
-   Copy `server/.env.example` to `server/.env` and update `MONGODB_URI` if using Atlas:
-   ```bash
-   cp server/.env.example server/.env
-   ```
-
-3. **Seed realistic demo data (12 bins, 18 complaints, tasks, users):**
-   ```bash
-   npm run seed
-   ```
-
-4. **Launch development server:**
-   ```bash
-   npm run dev
-   ```
-   - Client: `http://localhost:5173`
-   - Server: `http://localhost:5000`
+### Command 2: Start Development Servers
+Runs backend API on port 5000 and Vite client on port 3000 concurrently:
+```bash
+npm run dev:server
+# in a second terminal:
+npm run dev:client
+```
+Visit `http://localhost:3000` in your browser.
 
 ---
 
-## 8. Screenshots
+## Demo Logins
 
-*(College presentation placeholders: include Citizen Report screen, Authority Command Center, and Collector Mobile Task list).*
+All demo accounts use password **`Demo@123`**:
+
+| Role | Email | Password | Access / UI |
+|---|---|---|---|
+| **Citizen** | `citizen@demo.com` | `Demo@123` | Report waste, live timeline, status tracker |
+| **Collector** | `collector@demo.com` | `Demo@123` | Route tasks, pickup navigation, after photos |
+| **Authority** | `authority@demo.com` | `Demo@123` | Bento dashboard, fleet radar, photo audit |
+
+*Quick-click demo chips are also available directly on the login form for 1-click access.*
+
+---
+
+## Render Deployment (Single Web Service)
+
+Deploy to [Render](https://render.com) as a single Node.js Web Service:
+
+1. Push your repository to GitHub.
+2. In Render, click **New +** → **Web Service** and select your repository.
+3. Configure the service settings:
+   - **Environment**: Node
+   - **Build Command**: `npm run build`
+   - **Start Command**: `npm start`
+4. Add the following **Environment Variables**:
+   - `MONGODB_URI`: *Your MongoDB Atlas connection string*
+   - `JWT_SECRET`: *A secure random string*
+   - `COLLECTOR_CODE`: `COLLECT-2026`
+   - `NODE_ENV`: `production`
+5. Click **Create Web Service**. Express automatically serves the built frontend (`client/dist`) at the root URL while handling all `/api` endpoints without CORS configuration.
+
+### Prevent Free-Tier Sleep (Optional)
+To keep the Render free tier responsive:
+- Add a free monitor on [UptimeRobot](https://uptimerobot.com) targeting `https://<your-render-app>.onrender.com/api/health` with a 5-minute interval.
