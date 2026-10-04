@@ -2,6 +2,11 @@
 
 > **Tagline:** *"Keep It Clean, Keep It Smart."*
 
+[![Live Demo](https://img.shields.io/badge/Live%20Website-GitHub%20Pages-success?style=for-the-badge&logo=github)](https://rithanyau24-nyunus222.github.io/FSD-Smart-Waste-Bin/)
+[![Deploy to GitHub Pages](https://github.com/rithanyau24-nyunus222/FSD-Smart-Waste-Bin/actions/workflows/deploy.yml/badge.svg)](https://github.com/rithanyau24-nyunus222/FSD-Smart-Waste-Bin/actions/workflows/deploy.yml)
+
+🌐 **Live Website:** [https://rithanyau24-nyunus222.github.io/FSD-Smart-Waste-Bin/](https://rithanyau24-nyunus222.github.io/FSD-Smart-Waste-Bin/)
+
 A full-stack MERN web application developed as a College Full Stack Development project that connects citizens, municipal authorities, and waste collectors to transform urban waste management from delayed, untracked complaints into a transparent, prioritized, and closed-loop process.
 
 ---
