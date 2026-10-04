@@ -1,72 +1,98 @@
 // Realistic mock dataset for CleanChennai Smart Waste Management System
 // Replicating authentic Chennai coordinates, realistic incident photos, and active duplicates
 
-const createWasteSvg = (title, type, color, icon) => {
+// Realistic mock dataset for CleanChennai Smart Waste Management System
+// Replicating authentic Chennai coordinates, realistic incident photos, and active duplicates
+
+const createWasteSvg = (title, type, color, icon, badge = 'CITIZEN REPORT') => {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
     <defs>
-      <linearGradient id="grad_${type}" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#0f172a" />
-        <stop offset="100%" stop-color="#1e293b" />
+      <linearGradient id="paperGrad_${type}" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#FAF7F2" />
+        <stop offset="100%" stop-color="#F2ECE1" />
       </linearGradient>
+      <pattern id="stampBorder" width="16" height="16" patternUnits="userSpaceOnUse">
+        <circle cx="8" cy="8" r="1.5" fill="#D9D0C1" />
+      </pattern>
     </defs>
-    <rect width="100%" height="100%" fill="url(#grad_${type})"/>
-    <rect x="30" y="30" width="540" height="340" rx="16" fill="#1e293b" stroke="${color}" stroke-width="2" opacity="0.6"/>
-    <circle cx="300" cy="160" r="70" fill="${color}" opacity="0.2"/>
-    <circle cx="300" cy="160" r="50" fill="${color}" opacity="0.3"/>
-    <text x="300" y="175" font-size="52" text-anchor="middle" dominant-baseline="middle">${icon}</text>
-    <text x="300" y="260" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="700" fill="#f8fafc" text-anchor="middle">${title}</text>
-    <rect x="200" y="285" width="200" height="28" rx="14" fill="${color}" opacity="0.25"/>
-    <text x="300" y="304" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="600" fill="${color}" text-anchor="middle">${type.toUpperCase()}</text>
-    <text x="300" y="340" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">Greater Chennai Corporation · Citizen Geo-Upload</text>
+    <!-- Warm vintage paper background -->
+    <rect width="100%" height="100%" fill="url(#paperGrad_${type})"/>
+    <rect width="100%" height="100%" fill="url(#stampBorder)" opacity="0.4"/>
+    
+    <!-- Tactile postcard border -->
+    <rect x="20" y="20" width="560" height="360" rx="18" fill="#FFFFFF" stroke="#E6DFD1" stroke-width="2"/>
+    <rect x="32" y="32" width="536" height="336" rx="14" fill="#FAF8F5" stroke="#EEE7DB" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+    <!-- Subject Emblem Circle with watercolor glow -->
+    <circle cx="300" cy="155" r="68" fill="${color}" opacity="0.12"/>
+    <circle cx="300" cy="155" r="50" fill="${color}" opacity="0.22"/>
+    <circle cx="300" cy="155" r="42" fill="#FFFFFF" stroke="${color}" stroke-width="2"/>
+    <text x="300" y="168" font-size="44" text-anchor="middle" dominant-baseline="middle">${icon}</text>
+
+    <!-- Incident Title & Type -->
+    <text x="300" y="246" font-family="'Fraunces', Georgia, serif" font-size="21" font-weight="700" fill="#292524" text-anchor="middle">${title}</text>
+    
+    <!-- Postal Pill Stamp -->
+    <rect x="180" y="270" width="240" height="28" rx="14" fill="${color}" opacity="0.15"/>
+    <rect x="180" y="270" width="240" height="28" rx="14" fill="none" stroke="${color}" stroke-width="1.5"/>
+    <text x="300" y="289" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="11" font-weight="800" letter-spacing="1" fill="${color}" text-anchor="middle">${type.toUpperCase()}</text>
+
+    <!-- Stamp Seal -->
+    <g transform="translate(450, 45) rotate(12)">
+      <rect width="100" height="30" rx="6" fill="#FAF5ED" stroke="#3A5A40" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <text x="50" y="19" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="800" fill="#3A5A40" text-anchor="middle" letter-spacing="0.5">GCC · VERIFIED</text>
+    </g>
+
+    <text x="300" y="338" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="11" font-weight="600" fill="#8C8479" text-anchor="middle">Greater Chennai Corporation · Geo-Tagged Incident Photo</text>
   </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 };
 
 export const samplePhotos = {
-  bin_overflow: createWasteSvg('Severe Municipal Bin Overflow', 'Bio & Plastic Spillage', '#ef4444', '🗑️'),
-  drain_block: createWasteSvg('Stormwater Drain Clogged with Plastic', 'High Flood Hazard', '#f59e0b', '🌊'),
-  commercial: createWasteSvg('Commercial Market Waste & Crates', 'Vegetable Market Dump', '#3b82f6', '📦'),
-  footpath: createWasteSvg('Footpath Garbage Heap & Animal Hazard', 'Public Hazard', '#ec4899', '🐕'),
-  park_litter: createWasteSvg('Tower Park Walking Track Litter', 'Public Recreation Zone', '#10b981', '🥤'),
-  medical: createWasteSvg('Unsegregated Pharmacy & Clinic Waste', 'Critical Biohazard', '#dc2626', '⚠️'),
-  cleaned_proof: createWasteSvg('Cleaned & Disinfected Waste Spot', 'Closed Loop Verification', '#10b981', '✅')
+  bin_overflow: createWasteSvg('Severe Municipal Bin Overflow', 'Bio & Plastic Spillage', '#C2593F', '🗑️'),
+  drain_block: createWasteSvg('Stormwater Drain Clogged with Plastic', 'High Monsoon Flood Threat', '#D9822B', '🌊'),
+  commercial: createWasteSvg('Commercial Market Waste & Crates', 'Vegetable Market Spillage', '#C2593F', '📦'),
+  footpath: createWasteSvg('Footpath Garbage Heap & Stray Hazard', 'Pedestrian Obstruction', '#D9822B', '🐕'),
+  park_litter: createWasteSvg('Tower Park Walking Track Litter', 'Public Recreation Area', '#3A5A40', '🥤'),
+  medical: createWasteSvg('Unsegregated Clinic Waste', 'Hazardous Waste Dump', '#C2593F', '⚠️'),
+  cleaned_proof: createWasteSvg('Cleaned & Disinfected Waste Spot', 'Verified Resolution Proof', '#3A5A40', '✅')
 };
 
 export const initialUsers = [
   {
     _id: 'usr_citizen_01',
-    name: 'Priya Sharma',
+    name: 'Citizen',
     email: 'citizen@demo.com',
     role: 'citizen',
     area: 'Adyar, Chennai'
   },
   {
     _id: 'usr_auth_01',
-    name: 'Officer Karthik',
+    name: 'Corporation Admin',
     email: 'authority@demo.com',
     role: 'authority',
-    area: 'Greater Chennai Corporation HQ (Ripon Building)'
+    area: 'Greater Chennai Corporation (Ripon Building)'
   },
   {
     _id: 'usr_col_01',
-    name: 'Murugan (Zone 13 Driver)',
+    name: 'Driver 1 (Zone 13 Adyar)',
     email: 'collector@demo.com',
     role: 'collector',
-    area: 'Adyar & Besant Nagar'
+    area: 'Zone 13 · Adyar & Besant Nagar'
   },
   {
     _id: 'usr_col_02',
-    name: 'Suresh (Zone 9 Driver)',
+    name: 'Driver 2 (Zone 9 T. Nagar)',
     email: 'collector2@demo.com',
     role: 'collector',
-    area: 'T. Nagar & Panagal Park'
+    area: 'Zone 9 · T. Nagar & Panagal Park'
   },
   {
     _id: 'usr_col_03',
-    name: 'Venkatesh (Zone 8 Driver)',
+    name: 'Driver 3 (Zone 8 Anna Nagar)',
     email: 'collector3@demo.com',
     role: 'collector',
-    area: 'Anna Nagar & Shenoy Nagar'
+    area: 'Zone 8 · Anna Nagar & Shenoy Nagar'
   }
 ];
 
@@ -400,25 +426,25 @@ export const initialComplaints = [
       {
         status: 'Verified',
         by: initialUsers[1],
-        note: 'Verified and queued',
+        note: 'Verified and queued for dispatch',
         at: new Date(Date.now() - 22 * 3600 * 1000).toISOString()
       },
       {
         status: 'Assigned',
         by: initialUsers[1],
-        note: 'Dispatched to Murugan',
+        note: 'Dispatched to Zone 13 Driver (Adyar route)',
         at: new Date(Date.now() - 20 * 3600 * 1000).toISOString()
       },
       {
         status: 'In Progress',
         by: initialUsers[2],
-        note: 'Collection started',
+        note: 'Collection started by sanitation driver',
         at: new Date(Date.now() - 18 * 3600 * 1000).toISOString()
       },
       {
         status: 'Collected',
         by: initialUsers[2],
-        note: 'CLOSED LOOP VERIFIED: Waste cleared, spot bleached, bin capacity reset to 5%.',
+        note: 'Verified cleanup: Waste cleared, pavement swept, lime powder disinfectant sprayed.',
         at: new Date(Date.now() - 17 * 3600 * 1000).toISOString()
       }
     ]
@@ -429,7 +455,7 @@ export const initialTasks = [
   {
     _id: 'tsk_01',
     complaint: initialComplaints[4], // cmp_05 in T. Nagar
-    assignedTo: initialUsers[3], // Suresh
+    assignedTo: initialUsers[3], // Driver 2
     status: 'in_progress',
     stopNumber: 1,
     priority: 'critical',
@@ -440,7 +466,7 @@ export const initialTasks = [
   {
     _id: 'tsk_02',
     complaint: initialComplaints[3], // cmp_04 in Anna Nagar
-    assignedTo: initialUsers[4], // Venkatesh
+    assignedTo: initialUsers[4], // Driver 3
     status: 'assigned',
     stopNumber: 1,
     priority: 'medium',
@@ -450,7 +476,7 @@ export const initialTasks = [
   {
     _id: 'tsk_03',
     complaint: initialComplaints[5], // cmp_06 in Adyar (collected)
-    assignedTo: initialUsers[2], // Murugan
+    assignedTo: initialUsers[2], // Driver 1
     status: 'collected',
     stopNumber: 1,
     priority: 'low',
@@ -485,7 +511,7 @@ export const initialNotifications = [
     _id: 'notif_03',
     user: 'usr_citizen_01',
     type: 'complaint_collected',
-    title: 'Incident Resolved & Closed Loop Verified!',
+    title: 'Incident Resolved & Verified Clean!',
     message: 'Your report at Besant Avenue Road has been cleared and verified by sanitation team. Thank you for keeping Chennai clean!',
     read: false,
     createdAt: new Date(Date.now() - 17 * 3600 * 1000).toISOString()

@@ -12,7 +12,7 @@ export const FloatingDecor = () => null;
 export const RiskBadge = ({ level = 'medium' }) => {
   const norm = (level || 'medium').toLowerCase();
   if (norm === 'critical') {
-    return <span className="badge badge-critical">🔴 Critical Hazard</span>;
+    return <span className="badge badge-critical">🔴 Critical</span>;
   }
   if (norm === 'high') {
     return <span className="badge badge-high">🟡 High Risk</span>;
@@ -20,7 +20,7 @@ export const RiskBadge = ({ level = 'medium' }) => {
   if (norm === 'low') {
     return <span className="badge badge-low">🟢 Low Risk</span>;
   }
-  return <span className="badge badge-medium">🔵 Medium Risk</span>;
+  return <span className="badge badge-medium">🔵 Medium</span>;
 };
 
 /* =====================================================
@@ -29,17 +29,17 @@ export const RiskBadge = ({ level = 'medium' }) => {
 export const StatusBadge = ({ status }) => {
   switch (status) {
     case 'Pending':
-      return <span className="badge badge-high">⏳ Pending Review</span>;
+      return <span className="badge badge-high">⏳ Pending</span>;
     case 'Verified':
-      return <span className="badge badge-verified">✓ Verified</span>;
     case 'Assigned':
-      return <span className="badge badge-medium">🚛 Task Assigned</span>;
+      return <span className="badge badge-medium">🚛 Assigned</span>;
     case 'In Progress':
-      return <span className="badge badge-medium">⚡ In Progress</span>;
+      return <span className="badge badge-high">⚡ In Progress</span>;
     case 'Collected':
-      return <span className="badge badge-collected">✅ Cleaned &amp; Verified</span>;
+    case 'Resolved':
+      return <span className="badge badge-collected">✓ Resolved</span>;
     case 'Merged':
-      return <span className="badge badge-merged">🔗 Duplicate Merged</span>;
+      return <span className="badge badge-merged">🔗 Merged</span>;
     case 'Rejected':
       return <span className="badge badge-critical">✕ Rejected</span>;
     default:
@@ -76,10 +76,10 @@ export const Navbar = () => {
     <header className="top-navbar">
       {/* Brand */}
       <NavLink to="/" className="navbar-brand">
-        <div className="navbar-logo-badge">🗑️</div>
+        <div className="navbar-logo-badge">🍃</div>
         <div>
           <div className="navbar-title">CleanChennai</div>
-          <div className="navbar-subtitle">Smart Municipal Grid</div>
+          <div className="navbar-subtitle">Smart Waste Grid</div>
         </div>
       </NavLink>
 
@@ -92,17 +92,17 @@ export const Navbar = () => {
 
         <NavLink to="/report" className={({ isActive }) => `nav-tab ${isActive ? 'active' : ''}`}>
           <span>📸</span>
-          <span>1. Report Waste</span>
+          <span>Citizen</span>
         </NavLink>
 
         <NavLink to="/dashboard" className={({ isActive }) => `nav-tab ${isActive ? 'active' : ''}`}>
           <span>🏛️</span>
-          <span>2. Admin &amp; Duplicates</span>
+          <span>Admin</span>
         </NavLink>
 
         <NavLink to="/tasks" className={({ isActive }) => `nav-tab ${isActive ? 'active' : ''}`}>
           <span>🚛</span>
-          <span>3. Driver Tasks</span>
+          <span>Driver</span>
         </NavLink>
       </nav>
 
@@ -115,7 +115,7 @@ export const Navbar = () => {
             onClick={() => switchRole('citizen@demo.com')}
             title="Switch to Citizen Persona"
           >
-            👤 Citizen
+            Citizen
           </button>
           <button
             type="button"
@@ -123,7 +123,7 @@ export const Navbar = () => {
             onClick={() => switchRole('authority@demo.com')}
             title="Switch to Corporation Admin"
           >
-            🏛️ Admin
+            Admin
           </button>
           <button
             type="button"
@@ -131,7 +131,7 @@ export const Navbar = () => {
             onClick={() => switchRole('collector@demo.com')}
             title="Switch to Sanitation Driver"
           >
-            🚛 Driver
+            Driver
           </button>
         </div>
 
@@ -139,7 +139,7 @@ export const Navbar = () => {
           type="button"
           onClick={resetData}
           className="btn-secondary btn-sm"
-          style={{ padding: '6px 10px', fontSize: '0.78rem' }}
+          style={{ padding: '6px 12px', fontSize: '0.78rem' }}
           title="Reset Seed Data"
         >
           🔄 Reset
@@ -163,17 +163,17 @@ export const CityMap = ({
   bins = [],
   selectedItem = null,
   onSelectItem = null,
-  height = '460px'
+  height = '440px'
 }) => {
   // Chennai center coordinates [13.06, 80.24]
   const chennaiCenter = [13.06, 80.24];
 
   return (
-    <div style={{ width: '100%', height, borderRadius: 'var(--radius-xl)', overflow: 'hidden', border: '1px solid var(--border-light)' }}>
+    <div style={{ width: '100%', height, borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border-rustic)' }}>
       <MapContainer center={chennaiCenter} zoom={12} scrollWheelZoom={false} style={{ width: '100%', height: '100%' }}>
         {/* OpenStreetMap Standard Free Tiles - NEVER requires any API key! */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
@@ -182,7 +182,7 @@ export const CityMap = ({
           if (!bin.location?.coordinates) return null;
           const [lon, lat] = bin.location.coordinates;
           const isCritical = bin.fillLevel >= 80;
-          const color = isCritical ? '#ef4444' : bin.fillLevel >= 50 ? '#f59e0b' : '#10b981';
+          const color = isCritical ? '#c2593f' : bin.fillLevel >= 50 ? '#d9822b' : '#3a5a40';
 
           return (
             <CircleMarker
@@ -193,21 +193,21 @@ export const CityMap = ({
                 color: '#ffffff',
                 weight: 2,
                 fillColor: color,
-                fillOpacity: 0.9
+                fillOpacity: 0.95
               }}
               eventHandlers={{
                 click: () => onSelectItem && onSelectItem({ type: 'bin', data: bin })
               }}
             >
               <Popup>
-                <div style={{ padding: '4px', minWidth: '170px' }}>
-                  <div style={{ fontWeight: '800', fontSize: '0.88rem', color: '#1e293b' }}>
-                    🏢 Smart Bin: {bin.code}
+                <div style={{ padding: '4px', minWidth: '160px' }}>
+                  <div style={{ fontWeight: '800', fontSize: '0.88rem', color: '#292524' }}>
+                    🏢 Bin: {bin.code}
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '6px' }}>{bin.address}</div>
+                  <div style={{ fontSize: '0.78rem', color: '#57534e', marginBottom: '6px' }}>{bin.address}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', fontSize: '0.8rem', color }}>
                     <span>{bin.fillLevel}% Full</span>
-                    {isCritical && <span style={{ color: '#ef4444' }}>OVERFLOW</span>}
+                    {isCritical && <span>OVERFLOW</span>}
                   </div>
                 </div>
               </Popup>
@@ -219,15 +219,15 @@ export const CityMap = ({
         {complaints.map((cmp) => {
           if (!cmp.location?.coordinates || cmp.status === 'Merged') return null;
           const [lon, lat] = cmp.location.coordinates;
-          const isCollected = cmp.status === 'Collected';
+          const isResolved = cmp.status === 'Collected' || cmp.status === 'Resolved';
           const isCritical = cmp.riskLevel === 'critical' || cmp.priority === 'critical';
-          const pinColor = isCollected ? '#10b981' : isCritical ? '#ef4444' : '#5b50e5';
+          const pinColor = isResolved ? '#3a5a40' : isCritical ? '#c2593f' : '#4f7779';
 
           return (
             <CircleMarker
               key={cmp._id}
               center={[lat, lon]}
-              radius={isCritical ? 12 : 9}
+              radius={isCritical ? 11 : 9}
               pathOptions={{
                 color: '#ffffff',
                 weight: 2,
@@ -244,18 +244,18 @@ export const CityMap = ({
                     <img
                       src={cmp.photo}
                       alt="Waste capture"
-                      style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '6px', marginBottom: '6px' }}
+                      style={{ width: '100%', height: '95px', objectFit: 'cover', borderRadius: '8px', marginBottom: '6px' }}
                     />
                   )}
-                  <div style={{ fontWeight: '800', fontSize: '0.85rem', color: '#1e293b', marginBottom: '2px' }}>
+                  <div style={{ fontWeight: '800', fontSize: '0.85rem', color: '#292524', marginBottom: '2px' }}>
                     📍 {cmp.areaName || cmp.bin?.area || 'Reported Spot'}
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: '#475569', marginBottom: '6px' }}>
+                  <div style={{ fontSize: '0.78rem', color: '#57534e', marginBottom: '6px' }}>
                     {cmp.description}
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <RiskBadge level={cmp.riskLevel} />
-                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b' }}>{cmp.status}</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#57534e' }}>{cmp.status}</span>
                   </div>
                 </div>
               </Popup>
@@ -282,10 +282,10 @@ export const MapPicker = ({ lat, lng, onChange }) => {
       <CircleMarker
         center={[lat, lng]}
         radius={11}
-        pathOptions={{ color: '#ffffff', weight: 2, fillColor: '#5b50e5', fillOpacity: 0.95 }}
+        pathOptions={{ color: '#ffffff', weight: 2, fillColor: '#c2593f', fillOpacity: 0.95 }}
       >
         <Popup>
-          <div style={{ fontSize: '0.8rem', color: '#1e293b' }}>
+          <div style={{ fontSize: '0.8rem', color: '#292524' }}>
             <strong>Selected Incident Location</strong>
             <br />
             Lat: {lat.toFixed(4)}, Lng: {lng.toFixed(4)}
@@ -296,7 +296,7 @@ export const MapPicker = ({ lat, lng, onChange }) => {
   };
 
   return (
-    <div style={{ width: '100%', height: '220px', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border-light)' }}>
+    <div style={{ width: '100%', height: '220px', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-rustic)' }}>
       <MapContainer center={[lat, lng]} zoom={13} scrollWheelZoom={false} style={{ width: '100%', height: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -422,23 +422,221 @@ export const PhotoUpload = ({ photo, setPhoto, analysis, setAnalysis }) => {
         <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
       </label>
 
-      {/* AI Analysis preview */}
+      {/* AI Analysis preview in Ghibli rustic card */}
       {analysis && (
-        <div style={{ marginTop: '12px', background: '#f8fafc', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)', padding: '12px 16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--primary)', textTransform: 'uppercase' }}>
-              ✨ Automated Visual Analysis
-            </span>
+        <div className="ai-analysis-box" style={{ marginTop: '12px' }}>
+          <div className="ai-analysis-header">
+            <span className="ai-analysis-title">✨ Automated Image Telemetry</span>
             <RiskBadge level={analysis.suggestedRisk} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            <div>Category: <strong>{analysis.category}</strong></div>
-            <div>Est. Weight: <strong>{analysis.estimatedWeight}</strong></div>
-            <div>Threat: <strong>{analysis.drainageThreat}</strong></div>
-            <div>Spill Spread: <strong>{analysis.spillRadius}</strong></div>
+          <div className="ai-metric-grid">
+            <div className="ai-metric-item">Category: <strong>{analysis.category}</strong></div>
+            <div className="ai-metric-item">Est. Weight: <strong>{analysis.estimatedWeight}</strong></div>
+            <div className="ai-metric-item">Threat: <strong>{analysis.drainageThreat}</strong></div>
+            <div className="ai-metric-item">Spill Spread: <strong>{analysis.spillRadius}</strong></div>
           </div>
         </div>
       )}
     </div>
   );
 };
+
+/* =====================================================
+   INTERACTIVE PRESENTATION DEMO DOCK (FOR EXAMINER REVIEW)
+   ===================================================== */
+export const DemoDock = () => {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('');
+
+  const triggerNotify = (msg) => {
+    setStatusMsg(msg);
+    setTimeout(() => setStatusMsg(''), 3500);
+  };
+
+  const simulateNewOverflow = async () => {
+    try {
+      setLoading(true);
+      await apiFetch('/complaints', {
+        method: 'POST',
+        body: {
+          description: 'Fresh municipal bin overflow near Besant Nagar 4th Avenue. Plastic cups & food waste.',
+          areaName: 'Besant Nagar 4th Avenue',
+          latitude: 13.0022,
+          longitude: 80.2675,
+          photo: samplePhotos.bin_overflow,
+          severity: 'high',
+          riskLevel: 'critical',
+          analysis: {
+            category: 'Smart Bin Overflow',
+            estimatedWeight: '75 kg',
+            spillRadius: '3.5 meters',
+            drainageThreat: 'High (Nearby storm inlet)'
+          }
+        }
+      });
+      triggerNotify('🚨 Simulated new overflow in Besant Nagar!');
+      setTimeout(() => window.location.reload(), 800);
+    } catch (err) {
+      alert('Simulation error: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const simulateDuplicate = async () => {
+    try {
+      setLoading(true);
+      await apiFetch('/complaints', {
+        method: 'POST',
+        body: {
+          description: 'Garbage dump spilling at Besant Nagar corner (reported by shopkeeper 18m away).',
+          areaName: 'Besant Nagar 4th Avenue Corner',
+          latitude: 13.0023,
+          longitude: 80.2676,
+          photo: samplePhotos.footpath,
+          severity: 'high',
+          riskLevel: 'high',
+          analysis: {
+            category: 'Proximity Duplicate Spill',
+            estimatedWeight: '60 kg',
+            spillRadius: '2.5 meters',
+            drainageThreat: 'Moderate'
+          }
+        }
+      });
+      triggerNotify('🔗 Simulated duplicate 18m away! Check Admin Dashboard to merge.');
+      setTimeout(() => window.location.reload(), 800);
+    } catch (err) {
+      alert('Simulation error: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const simulateDriverCleanup = async () => {
+    try {
+      setLoading(true);
+      const tasks = await apiFetch('/tasks');
+      const pending = (tasks || []).find((t) => t.status !== 'collected');
+      if (!pending) {
+        alert('All tasks already collected! Click "Reset" to reload sample stops.');
+        return;
+      }
+      await apiFetch(`/tasks/${pending._id}/status`, {
+        method: 'PATCH',
+        body: {
+          status: 'collected',
+          proofNote: 'Area fully cleared, waste compacted, lime powder bleached.',
+          proofPhoto: samplePhotos.cleaned_proof
+        }
+      });
+      triggerNotify('🚛 Driver cleared stop & verified with photo proof!');
+      setTimeout(() => window.location.reload(), 800);
+    } catch (err) {
+      alert('Cleanup simulation error: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetAll = () => {
+    if (window.confirm('Reset all demo data back to default fresh state?')) {
+      localStorage.removeItem('clean_chennai_waste_v3');
+      window.location.reload();
+    }
+  };
+
+  return (
+    <div className="demo-dock">
+      {statusMsg && (
+        <div style={{ background: 'var(--moss)', color: '#fff', padding: '8px 14px', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', fontWeight: '700', boxShadow: 'var(--shadow-popup)', marginBottom: '4px' }}>
+          {statusMsg}
+        </div>
+      )}
+
+      {open && (
+        <div className="demo-dock-menu">
+          <div className="demo-dock-header">
+            <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>🎮</span> Presentation Demo Actions
+            </span>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              style={{ fontSize: '1rem', color: 'var(--text-muted)', lineHeight: 1 }}
+            >
+              ✕
+            </button>
+          </div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
+            1-Click triggers for Viva / Project Review presentation:
+          </div>
+
+          <button
+            type="button"
+            className="demo-dock-action-btn"
+            disabled={loading}
+            onClick={simulateNewOverflow}
+          >
+            <span>🚨</span>
+            <div>
+              <div>Simulate New Overflow</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Adds citizen incident in Besant Nagar</div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className="demo-dock-action-btn"
+            disabled={loading}
+            onClick={simulateDuplicate}
+          >
+            <span>🔗</span>
+            <div>
+              <div>Trigger Proximity Duplicate</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Adds 2nd report 18m away to test merge</div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className="demo-dock-action-btn"
+            disabled={loading}
+            onClick={simulateDriverCleanup}
+          >
+            <span>🚛</span>
+            <div>
+              <div>Simulate Driver Cleanup</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Resolves pending stop with photo proof</div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className="demo-dock-action-btn"
+            style={{ color: 'var(--terracotta)' }}
+            onClick={resetAll}
+          >
+            <span>🔄</span>
+            <div>
+              <div>Reset Default Grid</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Restores fresh starting state</div>
+            </div>
+          </button>
+        </div>
+      )}
+
+      <button
+        type="button"
+        className="demo-dock-trigger"
+        onClick={() => setOpen(!open)}
+        title="Quick Demo Controls for Viva Presentation"
+      >
+        <span>⚡</span>
+        <span>Review Demo Controls</span>
+      </button>
+    </div>
+  );
+};
+

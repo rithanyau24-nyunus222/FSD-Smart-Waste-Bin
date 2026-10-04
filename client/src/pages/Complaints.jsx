@@ -25,11 +25,11 @@ export const MyComplaints = () => {
     <div style={{ maxWidth: '960px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-heading)', color: 'var(--text-main)', marginBottom: '4px' }}>
+          <h1 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-serif)', color: 'var(--text-main)', marginBottom: '4px' }}>
             My Reported Incidents
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
-            Track live resolution, municipal risk assessment, and closed-loop verification across Chennai.
+            Track municipal risk evaluation, driver assignments, and verified photo proof.
           </p>
         </div>
         <Link to="/report" className="btn-primary btn-sm">
@@ -77,8 +77,8 @@ export const MyComplaints = () => {
                 {c.description}
               </div>
 
-              <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', color: 'var(--primary)', fontWeight: '700' }}>
-                <span>View Closed-Loop Timeline →</span>
+              <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-rustic)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', color: 'var(--terracotta)', fontWeight: '700' }}>
+                <span>Track Incident Resolution →</span>
               </div>
             </Link>
           ))}
@@ -126,18 +126,18 @@ export const ComplaintDetail = () => {
     );
   }
 
-  const isCollected = complaint.status === 'Collected';
-  const isAssigned = ['Assigned', 'In Progress', 'Collected'].includes(complaint.status);
-  const isVerified = ['Verified', 'Assigned', 'In Progress', 'Collected'].includes(complaint.status);
+  const isCollected = complaint.status === 'Collected' || complaint.status === 'Resolved';
+  const isAssigned = ['Assigned', 'In Progress', 'Collected', 'Resolved'].includes(complaint.status);
+  const isVerified = ['Verified', 'Assigned', 'In Progress', 'Collected', 'Resolved'].includes(complaint.status);
 
   return (
     <div style={{ maxWidth: '880px', margin: '0 auto' }}>
       <div style={{ marginBottom: '24px' }}>
-        <Link to="/my-complaints" style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: '700' }}>
+        <Link to="/my-complaints" style={{ color: 'var(--terracotta)', fontSize: '0.85rem', fontWeight: '700' }}>
           ← Back to All Reports
         </Link>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', flexWrap: 'wrap', gap: '8px' }}>
-          <h1 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-heading)', color: 'var(--text-main)' }}>
+          <h1 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-serif)', color: 'var(--text-main)' }}>
             Incident #{complaint._id.slice(-6)}: {complaint.areaName || 'Chennai Incident'}
           </h1>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -147,7 +147,7 @@ export const ComplaintDetail = () => {
         </div>
       </div>
 
-      {/* 4-Step Closed Loop Stepper */}
+      {/* 4-Step Resolution Stepper */}
       <div className="white-card" style={{ marginBottom: '24px' }}>
         <div className="timeline-stepper">
           <div className="stepper-item completed">
@@ -162,12 +162,12 @@ export const ComplaintDetail = () => {
 
           <div className={`stepper-item ${isAssigned ? 'completed' : isVerified ? 'active' : ''}`}>
             <div className="stepper-circle">3</div>
-            <span className="stepper-label">Task Dispatched</span>
+            <span className="stepper-label">Driver Dispatched</span>
           </div>
 
           <div className={`stepper-item ${isCollected ? 'completed' : isAssigned ? 'active' : ''}`}>
             <div className="stepper-circle">4</div>
-            <span className="stepper-label">Closed-Loop Verified</span>
+            <span className="stepper-label">Cleaned &amp; Verified</span>
           </div>
         </div>
       </div>
@@ -188,10 +188,13 @@ export const ComplaintDetail = () => {
           {/* After Photo Proof if resolved */}
           {complaint.photoProof ? (
             <div>
-              <div style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--emerald)', marginBottom: '8px' }}>
-                ✅ Verified Cleanup Proof (Driver Capture)
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--moss)' }}>
+                  ✅ Verified Cleanup Proof (Driver Photo)
+                </span>
+                <span className="ink-stamp">CLEANED ✓</span>
               </div>
-              <div className="waste-photo-thumb" style={{ height: '220px', borderColor: 'var(--emerald)' }}>
+              <div className="waste-photo-thumb" style={{ height: '220px', borderColor: 'var(--moss-border)' }}>
                 <img src={complaint.photoProof} alt="Cleaned proof" />
               </div>
             </div>
@@ -200,7 +203,7 @@ export const ComplaintDetail = () => {
               <div style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '8px' }}>
                 📋 Incident Summary
               </div>
-              <div style={{ background: '#f8fafc', padding: '18px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)', height: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div style={{ background: 'var(--bg-card-subtle)', padding: '18px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-rustic)', height: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <div style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '12px', lineHeight: '1.4' }}>
                   {complaint.description}
                 </div>
@@ -211,7 +214,7 @@ export const ComplaintDetail = () => {
                   Location: <strong style={{ color: 'var(--text-main)' }}>{complaint.areaName || 'Chennai'}</strong>
                 </div>
                 {complaint.duplicateCount > 0 && (
-                  <div style={{ fontSize: '0.82rem', color: '#b45309', fontWeight: '700', marginTop: '10px' }}>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--ochre)', fontWeight: '700', marginTop: '10px' }}>
                     🔗 {complaint.duplicateCount} duplicate report(s) merged into this master ticket.
                   </div>
                 )}
@@ -247,8 +250,8 @@ export const ComplaintDetail = () => {
 
       {/* Audit History Timeline */}
       <div className="white-card">
-        <h3 style={{ fontSize: '1.15rem', fontFamily: 'var(--font-heading)', color: 'var(--text-main)', marginBottom: '18px' }}>
-          📜 Closed-Loop Audit Trail
+        <h3 style={{ fontSize: '1.15rem', fontFamily: 'var(--font-serif)', color: 'var(--text-main)', marginBottom: '18px' }}>
+          📜 Resolution Timeline
         </h3>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -259,7 +262,7 @@ export const ComplaintDetail = () => {
                 display: 'flex',
                 gap: '14px',
                 paddingBottom: '14px',
-                borderBottom: i < complaint.history.length - 1 ? '1px solid var(--border-light)' : 'none'
+                borderBottom: i < complaint.history.length - 1 ? '1px solid var(--border-rustic)' : 'none'
               }}
             >
               <div style={{ fontSize: '1.3rem', marginTop: '2px' }}>

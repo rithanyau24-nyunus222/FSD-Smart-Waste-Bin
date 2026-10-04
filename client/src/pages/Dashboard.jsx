@@ -118,48 +118,50 @@ export const Dashboard = () => {
 
   return (
     <div>
-      {/* Clean Top Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <div style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>
-          🏛️ Municipal Corporation Admin Portal
+      {/* Editorial Rustic Hero Card */}
+      <div className="editorial-hero">
+        <div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', fontWeight: '700', color: 'var(--moss)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+            <span>🏛️</span> Municipal Operations
+          </div>
+          <h1 className="editorial-hero-title">
+            Incident Review &amp; Dispatch
+          </h1>
+          <p className="editorial-hero-sub">
+            Review citizen photos, resolve proximity duplicate reports within 50m, and dispatch collection routes.
+          </p>
         </div>
-        <h1 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-heading)', color: 'var(--text-main)', letterSpacing: '-0.02em', marginBottom: '4px' }}>
-          Incident Review &amp; Dispatch Operations
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
-          Review citizen photos, resolve proximity duplicate reports within 50m, evaluate hazard risk, and dispatch daily collection tasks.
-        </p>
       </div>
 
       {/* DUPLICATE DETECTION & REMOVAL TOOL */}
       {duplicates.length > 0 && (
         <div className="duplicate-box">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: '#b45309', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 style={{ fontSize: '1.15rem', fontFamily: 'var(--font-serif)', fontWeight: '700', color: 'var(--terracotta)', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>🔍 Proximity Duplicate Detected</span>
-              <span style={{ fontSize: '0.72rem', background: '#b45309', color: '#fff', padding: '2px 8px', borderRadius: 'var(--radius-full)' }}>
-                {duplicates.length} CLUSTER
+              <span style={{ fontSize: '0.74rem', background: 'var(--terracotta)', color: '#fff', padding: '2px 10px', borderRadius: 'var(--radius-full)' }}>
+                {duplicates.length} Cluster
               </span>
             </h3>
           </div>
-          <p style={{ fontSize: '0.85rem', color: '#78350f', marginBottom: '14px' }}>
-            Multiple citizens reported waste at the same spot ({duplicates[0]?.distanceMeters}m apart). Merge them to combine citizen feedback into 1 ticket and prevent duplicate driver dispatches.
+          <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
+            Two citizens reported waste at the same spot ({duplicates[0]?.distanceMeters}m apart). Merge to maintain 1 unified stop and avoid sending 2 trucks.
           </p>
 
           {duplicates.map((pair, idx) => (
-            <div key={idx} style={{ background: '#fff', borderRadius: 'var(--radius-md)', padding: '16px', border: '1px solid rgba(245,158,11,0.2)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                  Location: {pair.primary.areaName || 'Chennai Spot'} ({pair.distanceMeters} meters apart)
+            <div key={idx} style={{ background: '#fff', borderRadius: 'var(--radius-md)', padding: '16px', border: '1px solid var(--border-rustic)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                  Location: {pair.primary.areaName || 'Chennai Spot'} ({pair.distanceMeters}m apart)
                 </span>
 
                 <button
                   type="button"
-                  className="btn-warning btn-sm"
+                  className="btn-primary btn-sm"
                   disabled={actionLoading}
                   onClick={() => handleMergeDuplicate(pair.primary._id, pair.duplicate._id)}
                 >
-                  🔗 Merge &amp; Remove Duplicate
+                  🔗 Merge Duplicate Reports
                 </button>
               </div>
 
@@ -175,7 +177,7 @@ export const Dashboard = () => {
                   <div className="waste-photo-thumb" style={{ height: '140px', marginBottom: '8px' }}>
                     <img src={pair.primary.photo} alt="Primary" />
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-main)', fontWeight: '600' }}>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-main)', fontWeight: '600' }}>
                     {pair.primary.description}
                   </div>
                 </div>
@@ -191,7 +193,7 @@ export const Dashboard = () => {
                   <div className="waste-photo-thumb" style={{ height: '140px', marginBottom: '8px' }}>
                     <img src={pair.duplicate.photo} alt="Duplicate" />
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-main)', fontWeight: '600' }}>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-main)', fontWeight: '600' }}>
                     {pair.duplicate.description}
                   </div>
                 </div>
@@ -210,7 +212,7 @@ export const Dashboard = () => {
               <span>Chennai Corporation Live Incident Map</span>
             </h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '2px' }}>
-              OpenStreetMap coverage across Chennai zones. Pins indicate reported waste locations and municipal bins.
+              Pins indicate reported waste locations and municipal bins across Chennai zones.
             </p>
           </div>
         </div>
@@ -228,10 +230,10 @@ export const Dashboard = () => {
           <div>
             <h2 className="white-card-title">
               <span>📸</span>
-              <span>Review Stored Reports &amp; Dispatch</span>
+              <span>Review Reports &amp; Dispatch</span>
             </h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '2px' }}>
-              Inspect photographic proof, update hazard risk, and assign to daily collection routes.
+              Inspect photos, adjust risk, and dispatch to daily collection routes.
             </p>
           </div>
 
@@ -243,8 +245,9 @@ export const Dashboard = () => {
                 type="button"
                 className={`btn-secondary btn-sm ${statusFilter === st ? 'active' : ''}`}
                 style={{
-                  backgroundColor: statusFilter === st ? 'var(--primary)' : 'var(--bg-input)',
-                  color: statusFilter === st ? '#fff' : 'var(--text-secondary)'
+                  backgroundColor: statusFilter === st ? 'var(--moss)' : 'var(--bg-card-subtle)',
+                  color: statusFilter === st ? '#fff' : 'var(--text-secondary)',
+                  borderColor: statusFilter === st ? 'var(--moss)' : 'var(--border-rustic)'
                 }}
                 onClick={() => setStatusFilter(st)}
               >

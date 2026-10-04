@@ -71,7 +71,7 @@ export const Login = () => {
         {/* 1-Click Role Access Buttons */}
         <div style={{ marginBottom: '24px' }}>
           <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '10px', textAlign: 'center' }}>
-            ⚡ 1-Click Instant Demo Access
+            ⚡ 1-Click Instant Role Switch
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button
@@ -80,10 +80,10 @@ export const Login = () => {
               style={{ justifyContent: 'flex-start', padding: '12px 14px', width: '100%' }}
               onClick={() => handleQuickLogin('citizen@demo.com')}
             >
-              <span style={{ fontSize: '1.4rem' }}>👤</span>
+              <span style={{ fontSize: '1.4rem' }}>📸</span>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ color: 'var(--text-main)', fontWeight: '700', fontSize: '0.9rem' }}>Citizen Portal (Priya)</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Report waste, photo AI analysis &amp; timeline tracking</div>
+                <div style={{ color: 'var(--text-main)', fontWeight: '700', fontSize: '0.9rem' }}>Citizen Portal</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Report waste, photo analysis &amp; resolution tracking</div>
               </div>
             </button>
 
@@ -95,8 +95,8 @@ export const Login = () => {
             >
               <span style={{ fontSize: '1.4rem' }}>🏛️</span>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ color: 'var(--text-main)', fontWeight: '700', fontSize: '0.9rem' }}>Corporation Admin (Karthik)</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Review stored photos, remove duplicates &amp; assess risk</div>
+                <div style={{ color: 'var(--text-main)', fontWeight: '700', fontSize: '0.9rem' }}>Corporation Admin</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Review reports, merge duplicates &amp; dispatch routes</div>
               </div>
             </button>
 
@@ -108,8 +108,8 @@ export const Login = () => {
             >
               <span style={{ fontSize: '1.4rem' }}>🚛</span>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ color: 'var(--text-main)', fontWeight: '700', fontSize: '0.9rem' }}>Sanitation Driver (Murugan)</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Daily tasks queue &amp; closed-loop verification</div>
+                <div style={{ color: 'var(--text-main)', fontWeight: '700', fontSize: '0.9rem' }}>Sanitation Driver</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Daily stop queue &amp; photo cleanup proof</div>
               </div>
             </button>
           </div>

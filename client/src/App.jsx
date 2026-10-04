@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Navbar } from './components.jsx';
+import { Navbar, DemoDock } from './components.jsx';
 
 import { Home, About, NotFound } from './pages/Home.jsx';
 import { Login, Register } from './pages/Auth.jsx';
@@ -38,6 +38,9 @@ const App = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+
+      {/* Interactive Review Demo Dock */}
+      <DemoDock />
     </div>
   );
 };

@@ -76,16 +76,48 @@ export const Tasks = () => {
 
   return (
     <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '28px' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 12px', borderRadius: 'var(--radius-full)', background: 'var(--primary-light)', color: 'var(--primary)', fontSize: '0.78rem', fontWeight: '700', marginBottom: '8px' }}>
-          🚛 SANITATION DRIVER FIELD COCKPIT
+      {/* Editorial Rustic Hero Card */}
+      <div className="editorial-hero">
+        <div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', fontWeight: '700', color: 'var(--moss)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+            <span>🚛</span> Sanitation Driver Route
+          </div>
+          <h1 className="editorial-hero-title">
+            Daily Collection Tasks
+          </h1>
+          <p className="editorial-hero-sub">
+            Assigned stops for Driver ({user?.area || 'Zone 13 Adyar'}). Clear hotspots and submit photo proof.
+          </p>
         </div>
-        <h1 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-heading)', color: 'var(--text-main)', marginBottom: '4px' }}>
-          Today's Daily Collection Tasks
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-          Assigned to: <strong>{user?.name || 'Sanitation Driver'}</strong> ({user?.area || 'Zone 13 Adyar'})
-        </p>
+      </div>
+
+      {/* Realistic Driver Shift & Truck Status Card */}
+      <div className="white-card" style={{ padding: '16px 20px', marginBottom: '24px', backgroundColor: 'var(--bg-card-subtle)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '1.8rem' }}>🚛</span>
+            <div>
+              <div style={{ fontWeight: '800', color: 'var(--text-main)', fontSize: '0.95rem' }}>
+                Compactor Truck: TN-09-E-4821
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                Zone 13 Shift #1 · Route Corridor: Adyar &amp; Besant Nagar
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700' }}>
+                Truck Payload
+              </div>
+              <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--moss)' }}>
+                3.8 / 8.0 Tonnes (48%)
+              </div>
+            </div>
+            <span className="badge badge-verified">🟢 GPS Connected</span>
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -96,9 +128,9 @@ export const Tasks = () => {
         <>
           {/* Active Tasks Queue */}
           <div style={{ marginBottom: '40px' }}>
-            <h2 style={{ fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-serif)', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>⚡ Active Stops</span>
-              <span style={{ fontSize: '0.8rem', background: 'var(--primary-light)', color: 'var(--primary)', padding: '2px 10px', borderRadius: 'var(--radius-full)', fontWeight: '700' }}>
+              <span style={{ fontSize: '0.8rem', background: 'var(--moss-light)', color: 'var(--moss)', border: '1px solid var(--moss-border)', padding: '2px 10px', borderRadius: 'var(--radius-full)', fontWeight: '700' }}>
                 {pendingTasks.length} pending
               </span>
             </h2>
@@ -121,7 +153,7 @@ export const Tasks = () => {
                     <div key={t._id} className="white-card" style={{ padding: '22px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ background: 'var(--primary)', color: '#fff', fontWeight: '800', fontSize: '11px', padding: '3px 10px', borderRadius: 'var(--radius-full)' }}>
+                          <span style={{ background: 'var(--terracotta)', color: '#fff', fontWeight: '800', fontSize: '11px', padding: '3px 10px', borderRadius: 'var(--radius-full)' }}>
                             STOP #{idx + 1}
                           </span>
                           <strong style={{ color: 'var(--text-main)', fontSize: '1.05rem' }}>
@@ -150,7 +182,7 @@ export const Tasks = () => {
                           </div>
 
                           {t.notes && (
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', background: '#f8fafc', border: '1px solid var(--border-light)', padding: '8px 12px', borderRadius: 'var(--radius-sm)' }}>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', background: 'var(--bg-card-subtle)', border: '1px solid var(--border-rustic)', padding: '8px 12px', borderRadius: 'var(--radius-sm)' }}>
                               <strong>Dispatcher Note:</strong> {t.notes}
                             </div>
                           )}
@@ -158,7 +190,7 @@ export const Tasks = () => {
                       </div>
 
                       {/* Actions */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-light)', paddingTop: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-rustic)', paddingTop: '14px', flexWrap: 'wrap', gap: '10px' }}>
                         <button
                           type="button"
                           className="btn-secondary btn-sm"
@@ -184,7 +216,7 @@ export const Tasks = () => {
                             className="btn-primary btn-sm"
                             onClick={() => setResolvingTask(t)}
                           >
-                            ✅ Complete &amp; Verify Collection
+                            ✅ Complete &amp; Upload Proof
                           </button>
                         </div>
                       </div>
@@ -195,26 +227,26 @@ export const Tasks = () => {
             )}
           </div>
 
-          {/* Completed / Closed Loop History */}
+          {/* Completed History */}
           {completedTasks.length > 0 && (
             <div>
-              <h2 style={{ fontSize: '1.15rem', color: 'var(--text-main)', marginBottom: '14px' }}>
-                🏁 Closed-Loop Verified Today ({completedTasks.length})
+              <h2 style={{ fontSize: '1.15rem', fontFamily: 'var(--font-serif)', color: 'var(--text-main)', marginBottom: '14px' }}>
+                🏁 Verified Cleaned Today ({completedTasks.length})
               </h2>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {completedTasks.map((t) => (
                   <div key={t._id} className="white-card" style={{ padding: '16px 20px', marginBottom: '0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                       <div>
                         <strong style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}>
                           ✓ {t.complaint?.areaName || t.complaint?.bin?.area || 'Cleared Spot'}
                         </strong>
                         <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                          Closed at {new Date(t.completedAt || t.assignedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {t.proofNote || 'Waste cleared'}
+                          Cleared at {new Date(t.completedAt || t.assignedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {t.proofNote || 'Waste cleared and sanitized'}
                         </div>
                       </div>
-                      <span className="badge badge-collected">Closed-Loop Verified</span>
+                      <span className="ink-stamp">CLEANED ✓</span>
                     </div>
                   </div>
                 ))}
@@ -224,12 +256,12 @@ export const Tasks = () => {
         </>
       )}
 
-      {/* CLOSED VERIFICATION LOOP MODAL */}
+      {/* VERIFICATION MODAL */}
       {resolvingTask && (
         <div className="modal-overlay">
           <div className="modal-card">
-            <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-heading)', color: 'var(--text-main)', marginBottom: '8px' }}>
-              🔒 Closed-Loop Verification Confirmation
+            <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-serif)', color: 'var(--text-main)', marginBottom: '8px' }}>
+              ✅ Confirm Cleanup with Photo Proof
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '18px' }}>
               Confirm that the waste at <strong>{resolvingTask.complaint?.areaName || 'this location'}</strong> has been completely cleared.
@@ -242,7 +274,7 @@ export const Tasks = () => {
               <div className="waste-photo-thumb" style={{ height: '170px', marginBottom: '8px' }}>
                 <img src={samplePhotos.cleaned_proof} alt="Cleaned proof" />
                 <div className="photo-badge-overlay">
-                  <span className="badge badge-collected">✅ Spot Cleaned &amp; Disinfected</span>
+                  <span className="ink-stamp">CLEANED &amp; DISINFECTED ✓</span>
                 </div>
               </div>
             </div>
@@ -272,7 +304,7 @@ export const Tasks = () => {
                 disabled={actionLoading}
                 onClick={handleCompleteCollection}
               >
-                {actionLoading ? 'Closing Loop...' : 'Confirm & Close Loop'}
+                {actionLoading ? 'Submitting Proof...' : 'Confirm Cleanup & Upload Proof'}
               </button>
             </div>
           </div>

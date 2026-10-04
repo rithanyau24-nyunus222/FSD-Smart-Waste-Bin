@@ -77,13 +77,19 @@ export const Report = () => {
 
   return (
     <div style={{ maxWidth: '860px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-heading)', color: 'var(--text-main)', marginBottom: '6px' }}>
-          Report Waste Overflow
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
-          Upload a photo of overflowing garbage or street litter. The system will analyze the issue and map it directly on the Chennai corporation grid.
-        </p>
+      {/* Editorial Rustic Hero Card */}
+      <div className="editorial-hero">
+        <div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', fontWeight: '700', color: 'var(--moss)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+            <span>📸</span> Citizen Grievance Portal
+          </div>
+          <h1 className="editorial-hero-title">
+            Report Waste Overflow
+          </h1>
+          <p className="editorial-hero-sub">
+            Upload a photo of street waste to pin location on the Chennai grid and notify municipal trucks.
+          </p>
+        </div>
       </div>
 
       {error && (
