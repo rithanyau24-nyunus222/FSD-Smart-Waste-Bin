@@ -48,10 +48,10 @@ export const StatusBadge = ({ status }) => {
 };
 
 /* =====================================================
-   LEFT SIDEBAR (PERMANENT DESKTOP NAV)
+   CLEAN MINIMALIST TOP NAVBAR
    ===================================================== */
-export const Sidebar = () => {
-  const { user, login, logout } = useAuth();
+export const Navbar = () => {
+  const { user, login } = useAuth();
   const navigate = useNavigate();
 
   const switchRole = async (email) => {
@@ -59,387 +59,101 @@ export const Sidebar = () => {
       await login(email, 'Demo@123');
       if (email.includes('authority')) navigate('/dashboard');
       else if (email.includes('collector')) navigate('/tasks');
-      else navigate('/');
+      else navigate('/report');
     } catch (err) {
       console.error('Role switch failed:', err);
     }
   };
 
+  const resetData = () => {
+    if (window.confirm('Reset demo database to fresh initial state?')) {
+      localStorage.removeItem('clean_chennai_waste_v3');
+      window.location.reload();
+    }
+  };
+
   return (
-    <aside className="sidebar">
-      {/* Brand Logo */}
-      <div className="sidebar-logo">
-        <div className="logo-badge">🗑️</div>
-        <span className="logo-title">CleanChennai</span>
-      </div>
+    <header className="top-navbar">
+      {/* Brand */}
+      <NavLink to="/" className="navbar-brand">
+        <div className="navbar-logo-badge">🗑️</div>
+        <div>
+          <div className="navbar-title">CleanChennai</div>
+          <div className="navbar-subtitle">Smart Municipal Grid</div>
+        </div>
+      </NavLink>
 
-      <div className="sidebar-section-title">Navigation</div>
-      <nav className="sidebar-menu">
-        <NavLink to="/" end className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}>
-          <span className="sidebar-item-icon">📊</span>
-          <span>Home / Overview</span>
+      {/* Mode Tabs (The 3 Core Steps + Overview) */}
+      <nav className="navbar-tabs">
+        <NavLink to="/" end className={({ isActive }) => `nav-tab ${isActive ? 'active' : ''}`}>
+          <span>📊</span>
+          <span>Overview</span>
         </NavLink>
 
-        <NavLink to="/report" className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}>
-          <span className="sidebar-item-icon">📸</span>
-          <span>Report Waste</span>
+        <NavLink to="/report" className={({ isActive }) => `nav-tab ${isActive ? 'active' : ''}`}>
+          <span>📸</span>
+          <span>1. Report Waste</span>
         </NavLink>
 
-        <NavLink to="/dashboard" className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}>
-          <span className="sidebar-item-icon">🏛️</span>
-          <span>Corporation Hub</span>
+        <NavLink to="/dashboard" className={({ isActive }) => `nav-tab ${isActive ? 'active' : ''}`}>
+          <span>🏛️</span>
+          <span>2. Admin &amp; Duplicates</span>
         </NavLink>
 
-        <NavLink to="/tasks" className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}>
-          <span className="sidebar-item-icon">🚛</span>
-          <span>Daily Tasks</span>
-        </NavLink>
-
-        <NavLink to="/my-complaints" className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}>
-          <span className="sidebar-item-icon">📑</span>
-          <span>My Reports</span>
+        <NavLink to="/tasks" className={({ isActive }) => `nav-tab ${isActive ? 'active' : ''}`}>
+          <span>🚛</span>
+          <span>3. Driver Tasks</span>
         </NavLink>
       </nav>
 
-      {/* Quick 1-Click Role Switcher */}
-      <div className="sidebar-roles-box">
-        <div className="sidebar-roles-title">
-          <span>⚡ Instant Persona Switch</span>
-        </div>
-        <button
-          type="button"
-          className={`sidebar-role-btn ${user?.role === 'citizen' ? 'active' : ''}`}
-          onClick={() => switchRole('citizen@demo.com')}
-        >
-          <span>👤</span>
-          <span>Citizen (Priya)</span>
-        </button>
-        <button
-          type="button"
-          className={`sidebar-role-btn ${user?.role === 'authority' ? 'active' : ''}`}
-          onClick={() => switchRole('authority@demo.com')}
-        >
-          <span>🏛️</span>
-          <span>Admin (Karthik)</span>
-        </button>
-        <button
-          type="button"
-          className={`sidebar-role-btn ${user?.role === 'collector' ? 'active' : ''}`}
-          onClick={() => switchRole('collector@demo.com')}
-        >
-          <span>🚛</span>
-          <span>Driver (Murugan)</span>
-        </button>
-      </div>
-
-      {/* Footer controls */}
-      <div className="sidebar-footer">
-        <button
-          type="button"
-          className="sidebar-item"
-          style={{ fontSize: '0.82rem', padding: '8px 12px', color: 'var(--text-muted)' }}
-          onClick={() => {
-            if (window.confirm('Reset demo database to fresh seed state?')) {
-              localStorage.removeItem('clean_chennai_waste_v3');
-              window.location.reload();
-            }
-          }}
-        >
-          <span className="sidebar-item-icon">🔄</span>
-          <span>Reset Demo Data</span>
-        </button>
-
-        {user ? (
+      {/* Right Controls: Quick Role Switcher */}
+      <div className="navbar-right">
+        <div className="role-pill-group">
           <button
             type="button"
-            className="sidebar-item"
-            style={{ fontSize: '0.82rem', padding: '8px 12px', color: 'var(--rose)' }}
-            onClick={logout}
+            className={`role-pill-btn ${user?.role === 'citizen' ? 'active' : ''}`}
+            onClick={() => switchRole('citizen@demo.com')}
+            title="Switch to Citizen Persona"
           >
-            <span className="sidebar-item-icon">🚪</span>
-            <span>Sign Out</span>
+            👤 Citizen
           </button>
-        ) : (
-          <NavLink to="/login" className="sidebar-item" style={{ color: 'var(--primary)' }}>
-            <span className="sidebar-item-icon">🔑</span>
-            <span>Sign In</span>
-          </NavLink>
-        )}
-      </div>
-    </aside>
-  );
-};
-
-/* =====================================================
-   TOP HEADER BAR
-   ===================================================== */
-export const Header = () => {
-  const { user } = useAuth();
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  const fetchNotifications = async () => {
-    if (!user) return;
-    try {
-      const data = await apiFetch('/notifications');
-      setNotifications(data || []);
-      setUnreadCount((data || []).filter((n) => !n.read).length);
-    } catch (err) {
-      console.warn('Failed to load notifications:', err.message);
-    }
-  };
-
-  useEffect(() => {
-    if (user) {
-      fetchNotifications();
-      const interval = setInterval(fetchNotifications, 15000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
-
-  const handleMarkAsRead = async () => {
-    try {
-      await apiFetch('/notifications/read', { method: 'PATCH' });
-      setUnreadCount(0);
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    } catch (err) {
-      console.error('Failed to mark read:', err.message);
-    }
-  };
-
-  return (
-    <header className="top-header">
-      {/* Search Input */}
-      <div className="header-search">
-        <span className="header-search-icon">🔍</span>
-        <input
-          type="text"
-          placeholder="Search Chennai waste reports, wards, bins..."
-        />
-      </div>
-
-      {/* Header Actions */}
-      <div className="header-actions">
-        {/* Notification Bell */}
-        <div style={{ position: 'relative' }}>
           <button
             type="button"
-            className="header-icon-btn"
-            onClick={() => {
-              setNotifOpen(!notifOpen);
-              if (!notifOpen && unreadCount > 0) handleMarkAsRead();
-            }}
-            aria-label="Notifications"
+            className={`role-pill-btn ${user?.role === 'authority' ? 'active' : ''}`}
+            onClick={() => switchRole('authority@demo.com')}
+            title="Switch to Corporation Admin"
           >
-            🔔
-            {unreadCount > 0 && <span className="header-badge-dot" />}
+            🏛️ Admin
           </button>
-
-          {notifOpen && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '50px',
-                right: 0,
-                width: '320px',
-                backgroundColor: '#ffffff',
-                border: '1px solid var(--border-light)',
-                borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-popup)',
-                zIndex: 1000,
-                padding: '16px'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '8px', borderBottom: '1px solid var(--border-subtle)' }}>
-                <strong style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}>Notifications</strong>
-                {unreadCount > 0 && (
-                  <button type="button" onClick={handleMarkAsRead} style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: '600' }}>
-                    Mark all read
-                  </button>
-                )}
-              </div>
-              <div style={{ maxHeight: '260px', overflowY: 'auto' }}>
-                {notifications.length === 0 ? (
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '16px 0' }}>
-                    No notifications
-                  </p>
-                ) : (
-                  notifications.map((n) => (
-                    <div
-                      key={n._id}
-                      style={{
-                        padding: '8px 10px',
-                        borderRadius: 'var(--radius-sm)',
-                        backgroundColor: n.read ? '#fff' : 'var(--primary-light)',
-                        marginBottom: '6px',
-                        fontSize: '0.8rem'
-                      }}
-                    >
-                      <div style={{ fontWeight: '700', color: 'var(--text-main)', marginBottom: '2px' }}>{n.title || 'Update'}</div>
-                      <div style={{ color: 'var(--text-secondary)' }}>{n.message}</div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
+          <button
+            type="button"
+            className={`role-pill-btn ${user?.role === 'collector' ? 'active' : ''}`}
+            onClick={() => switchRole('collector@demo.com')}
+            title="Switch to Sanitation Driver"
+          >
+            🚛 Driver
+          </button>
         </div>
 
-        {/* User Pill */}
-        {user && (
-          <div className="user-profile-pill">
-            <div className="user-avatar-circle">
-              {user.name ? user.name[0] : 'U'}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span className="user-pill-name">{user.name}</span>
-            </div>
-            <span className="user-pill-role">
-              {user.role === 'authority' ? 'Admin' : user.role === 'collector' ? 'Driver' : 'Citizen'}
-            </span>
-          </div>
-        )}
+        <button
+          type="button"
+          onClick={resetData}
+          className="btn-secondary btn-sm"
+          style={{ padding: '6px 10px', fontSize: '0.78rem' }}
+          title="Reset Seed Data"
+        >
+          🔄 Reset
+        </button>
       </div>
     </header>
   );
 };
 
-/* =====================================================
-   RIGHT STATS PANEL (MATCHING REFERENCE IMAGE)
-   ===================================================== */
-export const RightPanel = () => {
-  const { user } = useAuth();
+// Aliases for backwards compatibility if needed
+export const Sidebar = () => null;
+export const Header = () => null;
+export const RightPanel = () => null;
 
-  return (
-    <aside className="right-panel">
-      {/* Profile Snapshot & Circular Cleanliness Score */}
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ position: 'relative', width: '84px', height: '84px', margin: '0 auto 12px auto' }}>
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              borderRadius: '50%',
-              background: 'conic-gradient(var(--primary) 0% 88%, #e2e8f0 88% 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '6px'
-            }}
-          >
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: '50%',
-                background: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '28px'
-              }}
-            >
-              {user?.role === 'authority' ? '🏛️' : user?.role === 'collector' ? '🚛' : '👤'}
-            </div>
-          </div>
-          <span
-            style={{
-              position: 'absolute',
-              top: '0',
-              right: '-4px',
-              background: 'var(--primary)',
-              color: '#fff',
-              fontSize: '11px',
-              fontWeight: '800',
-              padding: '2px 6px',
-              borderRadius: 'var(--radius-full)'
-            }}
-          >
-            88%
-          </span>
-        </div>
-
-        <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '2px' }}>
-          Hello, {user?.name ? user.name.split(' ')[0] : 'Citizen'}! 🌿
-        </h3>
-        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-          Zone: {user?.area || 'Chennai Central'}
-        </p>
-      </div>
-
-      {/* Weekly Activity Mini-Bar Chart (Matching Reference Image) */}
-      <div style={{ background: '#f8fafc', borderRadius: 'var(--radius-lg)', padding: '16px', border: '1px solid var(--border-light)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-          <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)' }}>Weekly Dispatches</span>
-          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Last 7 Days</span>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', height: '80px', padding: '0 6px' }}>
-          {[
-            { day: 'Mon', h: 40 },
-            { day: 'Tue', h: 65 },
-            { day: 'Wed', h: 30 },
-            { day: 'Thu', h: 80 },
-            { day: 'Fri', h: 55 },
-            { day: 'Sat', h: 90 },
-            { day: 'Sun', h: 35 }
-          ].map((bar, i) => (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-              <div
-                style={{
-                  width: '16px',
-                  height: `${bar.h}px`,
-                  backgroundColor: i === 5 ? 'var(--primary)' : '#cbd5e1',
-                  borderRadius: '4px'
-                }}
-              />
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{bar.day}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Active Zone Drivers on Duty */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)' }}>Sanitation Drivers</span>
-          <span style={{ fontSize: '0.72rem', color: 'var(--primary)', fontWeight: '700' }}>Active Now</span>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {[
-            { name: 'Murugan', zone: 'Zone 13 Adyar', status: 'On Route' },
-            { name: 'Suresh', zone: 'Zone 9 T. Nagar', status: 'En Route' },
-            { name: 'Venkatesh', zone: 'Zone 8 Anna Nagar', status: 'Standby' }
-          ].map((driver, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '8px 12px',
-                borderRadius: 'var(--radius-md)',
-                backgroundColor: '#f8fafc',
-                border: '1px solid var(--border-light)'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '16px' }}>🚛</span>
-                <div>
-                  <div style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)' }}>{driver.name}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{driver.zone}</div>
-                </div>
-              </div>
-              <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--emerald)' }}>{driver.status}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </aside>
-  );
-};
 
 /* =====================================================
    LIVE CHENNAI CITY MAP (100% FREE OPENSTREETMAP - NO API KEY!)

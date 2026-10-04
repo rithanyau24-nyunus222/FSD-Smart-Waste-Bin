@@ -118,42 +118,17 @@ export const Dashboard = () => {
 
   return (
     <div>
-      {/* PURPLE HERO BANNER (MATCHING REFERENCE IMAGE) */}
-      <div className="welcome-banner">
-        <span className="banner-tag">Municipal Corporation Admin Portal</span>
-        <h1 className="banner-title">
-          Greater Chennai Corporation Operations
+      {/* Clean Top Header */}
+      <div style={{ marginBottom: '24px' }}>
+        <div style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>
+          🏛️ Municipal Corporation Admin Portal
+        </div>
+        <h1 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-heading)', color: 'var(--text-main)', letterSpacing: '-0.02em', marginBottom: '4px' }}>
+          Incident Review &amp; Dispatch Operations
         </h1>
-        <p className="banner-subtitle">
-          Review incoming citizen photos, eliminate duplicate reports within 50m, assess hazard risk, and dispatch daily collection tasks.
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
+          Review citizen photos, resolve proximity duplicate reports within 50m, evaluate hazard risk, and dispatch daily collection tasks.
         </p>
-      </div>
-
-      {/* 3 METRIC CHIPS ROW */}
-      <div className="metric-chips-row">
-        <div className="metric-chip">
-          <div className="metric-chip-icon icon-purple">📬</div>
-          <div>
-            <div className="metric-chip-val">{stats ? stats.counts.pending : '...'}</div>
-            <div className="metric-chip-label">Pending Verification</div>
-          </div>
-        </div>
-
-        <div className="metric-chip">
-          <div className="metric-chip-icon icon-amber">🔗</div>
-          <div>
-            <div className="metric-chip-val">{duplicates.length}</div>
-            <div className="metric-chip-label">Duplicate Clusters</div>
-          </div>
-        </div>
-
-        <div className="metric-chip">
-          <div className="metric-chip-icon icon-emerald">🚛</div>
-          <div>
-            <div className="metric-chip-val">{stats ? stats.counts.inProgress : '...'}</div>
-            <div className="metric-chip-label">Daily Tasks in Field</div>
-          </div>
-        </div>
       </div>
 
       {/* DUPLICATE DETECTION & REMOVAL TOOL */}
