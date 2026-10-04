@@ -50,13 +50,18 @@ export function AuthProvider({ children }) {
     return res.user;
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
+  const switchRole = async (targetRole) => {
+    const creds = {
+      citizen: { email: 'citizen@demo.com', password: 'Demo@123' },
+      collector: { email: 'collector@demo.com', password: 'Demo@123' },
+      authority: { email: 'authority@demo.com', password: 'Demo@123' }
+    }[targetRole];
+    if (!creds) return;
+    return login(creds.email, creds.password);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, switchRole }}>
       {children}
     </AuthContext.Provider>
   );

@@ -857,33 +857,186 @@ export function Navbar({
 }
 
 // -------------------------------------------------------------
-// PROTECTED ROUTE
+// -------------------------------------------------------------
+// DEMO ROLE SWITCHER (Sticky top ribbon for instant testing)
+// -------------------------------------------------------------
+export function DemoRoleSwitcher() {
+  const { user, switchRole, logout } = useAuth();
+  const navigate = useNavigate();
+  const [switching, setSwitching] = useState(false);
+
+  const handleSwitch = async (role, path) => {
+    try {
+      setSwitching(true);
+      await switchRole(role);
+      navigate(path);
+    } catch (err) {
+      console.error('Failed to switch role:', err);
+    } finally {
+      setSwitching(false);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  const currentRole = user?.role || 'guest';
+
+  return (
+    <div
+      style={{
+        backgroundColor: '#1b3227',
+        color: '#f4f4e1',
+        padding: '7px var(--pad-x)',
+        fontSize: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '8px',
+        borderBottom: '2px solid rgba(255,255,255,0.12)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 9999
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#6ee7b7' }} />
+        <span style={{ fontWeight: 700, letterSpacing: '0.3px' }}>PORTAL SWITCHER:</span>
+        <span style={{ opacity: 0.9 }}>
+          Signed in as <strong>{user?.name || 'Rithanya'}</strong> ({currentRole.toUpperCase()})
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+        <span style={{ opacity: 0.75, marginRight: '2px' }}>Jump to:</span>
+        <button
+          type="button"
+          disabled={switching}
+          onClick={() => handleSwitch('citizen', '/citizen')}
+          style={{
+            background: currentRole === 'citizen' ? '#ffc2ef' : 'rgba(255,255,255,0.12)',
+            color: currentRole === 'citizen' ? '#294237' : '#f4f4e1',
+            border: 'none',
+            borderRadius: '999px',
+            padding: '4px 11px',
+            fontSize: '11px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          Citizen (Rithanya)
+        </button>
+        <button
+          type="button"
+          disabled={switching}
+          onClick={() => handleSwitch('collector', '/collector')}
+          style={{
+            background: currentRole === 'collector' ? '#d9f99d' : 'rgba(255,255,255,0.12)',
+            color: currentRole === 'collector' ? '#294237' : '#f4f4e1',
+            border: 'none',
+            borderRadius: '999px',
+            padding: '4px 11px',
+            fontSize: '11px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          Collector Hub
+        </button>
+        <button
+          type="button"
+          disabled={switching}
+          onClick={() => handleSwitch('authority', '/authority')}
+          style={{
+            background: currentRole === 'authority' ? '#acc6c1' : 'rgba(255,255,255,0.12)',
+            color: currentRole === 'authority' ? '#294237' : '#f4f4e1',
+            border: 'none',
+            borderRadius: '999px',
+            padding: '4px 11px',
+            fontSize: '11px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          Authority Dashboard
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          style={{
+            background: 'transparent',
+            color: '#f4f4e1',
+            border: '1px solid rgba(255,255,255,0.3)',
+            borderRadius: '999px',
+            padding: '3px 10px',
+            fontSize: '11px',
+            cursor: 'pointer',
+            marginLeft: '4px'
+          }}
+        >
+          Home / Login
+        </button>
+        <button
+          type="button"
+          onClick={handleLogout}
+          style={{
+            background: 'transparent',
+            color: '#fca5a5',
+            border: '1px solid rgba(252,165,165,0.4)',
+            borderRadius: '999px',
+            padding: '3px 10px',
+            fontSize: '11px',
+            cursor: 'pointer'
+          }}
+        >
+          Logout
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// -------------------------------------------------------------
+// PROTECTED ROUTE (With automatic demo sign-in fallback)
 // -------------------------------------------------------------
 export function ProtectedRoute({ allowedRoles = [], children }) {
-  const { user, loading } = useAuth();
+  const { user, loading, switchRole } = useAuth();
+  const [autoLogging, setAutoLogging] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    if (loading) return;
+    const targetRole = allowedRoles[0];
+    if (targetRole && (!user || !allowedRoles.includes(user.role))) {
+      setAutoLogging(true);
+      switchRole(targetRole)
+        .catch((err) => console.error('Auto-login error:', err))
+        .finally(() => setAutoLogging(false));
+    }
+  }, [user, loading, allowedRoles, switchRole]);
+
+  if (loading || autoLogging) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-paper-white)' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--color-paper-white)', gap: '14px' }}>
         <span className="loading-spinner" />
+        <div style={{ color: 'var(--color-green-house)', fontSize: '14px', fontWeight: 600 }}>
+          Loading {allowedRoles[0] ? allowedRoles[0].toUpperCase() : 'page'} portal...
+        </div>
       </div>
     );
   }
 
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-    const roleRoutes = {
-      citizen: '/citizen',
-      authority: '/authority',
-      collector: '/collector'
-    };
-    return <Navigate to={roleRoutes[user.role] || '/'} replace />;
-  }
-
-  return children;
+  return (
+    <>
+      <DemoRoleSwitcher />
+      {children}
+    </>
+  );
 }
 
 // -------------------------------------------------------------

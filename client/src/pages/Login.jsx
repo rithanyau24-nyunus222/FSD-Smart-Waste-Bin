@@ -31,14 +31,25 @@ export default function Login() {
   const [regArea, setRegArea] = useState('');
   const [regStaffCode, setRegStaffCode] = useState('');
 
-  // Redirect if logged in
-  useEffect(() => {
-    if (user) {
-      if (user.role === 'citizen') navigate('/citizen', { replace: true });
-      else if (user.role === 'authority') navigate('/authority', { replace: true });
-      else if (user.role === 'collector') navigate('/collector', { replace: true });
+  const handleQuickDemo = async (role) => {
+    setLoading(true);
+    setError('');
+    try {
+      const target = {
+        citizen: { email: 'citizen@demo.com', path: '/citizen' },
+        collector: { email: 'collector@demo.com', path: '/collector' },
+        authority: { email: 'authority@demo.com', path: '/authority' }
+      }[role];
+      if (target) {
+        await login(target.email, 'Demo@123');
+        navigate(target.path);
+      }
+    } catch (err) {
+      setError(err.message || 'Demo login failed');
+    } finally {
+      setLoading(false);
     }
-  }, [user, navigate]);
+  };
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -103,6 +114,51 @@ export default function Login() {
       {/* 1. Announcement Bar */}
       <AnnouncementBar />
 
+      {/* Logged In Status Banner */}
+      {user && (
+        <div
+          style={{
+            backgroundColor: '#ffc2ef',
+            color: '#294237',
+            padding: '10px var(--pad-x)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '10px',
+            borderBottom: '2px solid var(--green)',
+            fontWeight: 600,
+            fontSize: '13px'
+          }}
+        >
+          <div>
+            Logged in as <strong>{user.name}</strong> ({user.role.toUpperCase()})
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              type="button"
+              className="pill pill-dark"
+              style={{ fontSize: '11px', padding: '4px 12px', cursor: 'pointer' }}
+              onClick={() => {
+                if (user.role === 'citizen') navigate('/citizen');
+                else if (user.role === 'authority') navigate('/authority');
+                else if (user.role === 'collector') navigate('/collector');
+              }}
+            >
+              Open Your Dashboard &rarr;
+            </button>
+            <button
+              type="button"
+              className="pill pill-ghost"
+              style={{ fontSize: '11px', padding: '4px 12px', cursor: 'pointer' }}
+              onClick={() => logout()}
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 2. Nav (sticky, background var(--paper), padding 16px var(--pad-x), border-bottom 2px, a grid of 3 columns "1fr auto 1fr", align-items centre) */}
       <header
         style={{
@@ -159,8 +215,37 @@ export default function Login() {
           <Logo variant="dark" iconHeight={30} textSize={22} />
         </div>
 
-        {/* Right (justify end, gap 10px): "Register" ghost pill and "Log in" dark pill */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', alignItems: 'center' }}>
+        {/* Right (justify end, gap 8px): 1-Click Portals + "Register" and "Log in" */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '5px' }}>
+            <button
+              type="button"
+              className="pill pill-ghost"
+              style={{ fontSize: '11px', padding: '5px 10px', fontWeight: 700, background: '#ffc2ef', color: '#294237', cursor: 'pointer' }}
+              onClick={() => handleQuickDemo('citizen')}
+              title="Launch Citizen Portal as Rithanya"
+            >
+              Citizen
+            </button>
+            <button
+              type="button"
+              className="pill pill-ghost"
+              style={{ fontSize: '11px', padding: '5px 10px', fontWeight: 700, background: '#d9f99d', color: '#294237', cursor: 'pointer' }}
+              onClick={() => handleQuickDemo('collector')}
+              title="Launch Collector Route Hub"
+            >
+              Collector
+            </button>
+            <button
+              type="button"
+              className="pill pill-ghost"
+              style={{ fontSize: '11px', padding: '5px 10px', fontWeight: 700, background: '#acc6c1', color: '#294237', cursor: 'pointer' }}
+              onClick={() => handleQuickDemo('authority')}
+              title="Launch City Authority Map"
+            >
+              Authority
+            </button>
+          </div>
           <button
             type="button"
             className="pill pill-ghost"
@@ -310,32 +395,35 @@ export default function Login() {
                     </>
                   )}
                 </button>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-                  <span className="t10" style={{ color: 'var(--green)', opacity: 0.8 }}>Quick Demo:</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
+                  <span className="t10" style={{ color: 'var(--green)', fontWeight: 600 }}>1-Click Instant Demo:</span>
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                     <button
                       type="button"
+                      disabled={loading}
                       className="pill pill-ghost t11"
-                      style={{ padding: '4px 10px', fontSize: '11px' }}
-                      onClick={() => { setLoginEmail('citizen@demo.com'); setLoginPassword('Demo@123'); }}
+                      style={{ padding: '6px 12px', fontSize: '11px', background: '#ffc2ef', color: '#294237', fontWeight: 700, cursor: 'pointer' }}
+                      onClick={() => handleQuickDemo('citizen')}
                     >
-                      Citizen
+                      Citizen (Rithanya) &rarr;
                     </button>
                     <button
                       type="button"
+                      disabled={loading}
                       className="pill pill-ghost t11"
-                      style={{ padding: '4px 10px', fontSize: '11px' }}
-                      onClick={() => { setLoginEmail('collector@demo.com'); setLoginPassword('Demo@123'); }}
+                      style={{ padding: '6px 12px', fontSize: '11px', background: '#d9f99d', color: '#294237', fontWeight: 700, cursor: 'pointer' }}
+                      onClick={() => handleQuickDemo('collector')}
                     >
-                      Collector
+                      Collector &rarr;
                     </button>
                     <button
                       type="button"
+                      disabled={loading}
                       className="pill pill-ghost t11"
-                      style={{ padding: '4px 10px', fontSize: '11px' }}
-                      onClick={() => { setLoginEmail('authority@demo.com'); setLoginPassword('Demo@123'); }}
+                      style={{ padding: '6px 12px', fontSize: '11px', background: '#acc6c1', color: '#294237', fontWeight: 700, cursor: 'pointer' }}
+                      onClick={() => handleQuickDemo('authority')}
                     >
-                      Authority
+                      Authority &rarr;
                     </button>
                   </div>
                 </div>
@@ -495,14 +583,10 @@ export default function Login() {
             cursor: 'pointer',
             transition: 'background-color 200ms ease, color 200ms ease'
           }}
-          onClick={() => {
-            setTab('register');
-            setRegRole('citizen');
-            scrollToHeroCard('register');
-          }}
+          onClick={() => handleQuickDemo('citizen')}
           tabIndex={0}
           role="button"
-          onKeyDown={(e) => e.key === 'Enter' && scrollToHeroCard('register')}
+          onKeyDown={(e) => e.key === 'Enter' && handleQuickDemo('citizen')}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span className="caption" style={{ color: 'inherit' }}>( citizen )</span>
@@ -514,9 +598,20 @@ export default function Login() {
             <h3 className="t12" style={{ margin: '14px 0 6px', color: 'inherit' }}>
               Spot it.
             </h3>
-            <p className="t6" style={{ margin: 0, maxWidth: '240px', color: 'inherit' }}>
+            <p className="t6" style={{ margin: '0 0 12px', maxWidth: '240px', color: 'inherit' }}>
               Snap a photo, drop a pin, follow the progress.
             </p>
+            <button
+              type="button"
+              className="pill pill-dark"
+              style={{ fontSize: '12px', padding: '6px 14px', cursor: 'pointer' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleQuickDemo('citizen');
+              }}
+            >
+              Enter Citizen Portal (Rithanya) &rarr;
+            </button>
           </div>
         </div>
 
@@ -536,10 +631,10 @@ export default function Login() {
             cursor: 'pointer',
             transition: 'background-color 200ms ease, color 200ms ease'
           }}
-          onClick={() => scrollToHeroCard('login')}
+          onClick={() => handleQuickDemo('authority')}
           tabIndex={0}
           role="button"
-          onKeyDown={(e) => e.key === 'Enter' && scrollToHeroCard('login')}
+          onKeyDown={(e) => e.key === 'Enter' && handleQuickDemo('authority')}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span className="caption" style={{ color: 'inherit' }}>( authority )</span>
@@ -551,9 +646,20 @@ export default function Login() {
             <h3 className="t12" style={{ margin: '14px 0 6px', color: 'inherit' }}>
               Sort it.
             </h3>
-            <p className="t6" style={{ margin: 0, maxWidth: '240px', color: 'inherit' }}>
+            <p className="t6" style={{ margin: '0 0 12px', maxWidth: '240px', color: 'inherit' }}>
               Verify, prioritise and assign from one live map.
             </p>
+            <button
+              type="button"
+              className="pill pill-dark"
+              style={{ fontSize: '12px', padding: '6px 14px', cursor: 'pointer' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleQuickDemo('authority');
+              }}
+            >
+              Enter Authority Dashboard &rarr;
+            </button>
           </div>
         </div>
 
@@ -572,14 +678,10 @@ export default function Login() {
             cursor: 'pointer',
             transition: 'background-color 200ms ease, color 200ms ease'
           }}
-          onClick={() => {
-            setTab('register');
-            setRegRole('collector');
-            scrollToHeroCard('register');
-          }}
+          onClick={() => handleQuickDemo('collector')}
           tabIndex={0}
           role="button"
-          onKeyDown={(e) => e.key === 'Enter' && scrollToHeroCard('register')}
+          onKeyDown={(e) => e.key === 'Enter' && handleQuickDemo('collector')}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span className="caption" style={{ color: 'inherit' }}>( collector )</span>
@@ -591,9 +693,20 @@ export default function Login() {
             <h3 className="t12" style={{ margin: '14px 0 6px', color: 'inherit' }}>
               Clear it.
             </h3>
-            <p className="t6" style={{ margin: 0, maxWidth: '240px', color: 'inherit' }}>
+            <p className="t6" style={{ margin: '0 0 12px', maxWidth: '240px', color: 'inherit' }}>
               Get your route, collect, and add a photo as proof.
             </p>
+            <button
+              type="button"
+              className="pill pill-dark"
+              style={{ fontSize: '12px', padding: '6px 14px', cursor: 'pointer' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleQuickDemo('collector');
+              }}
+            >
+              Enter Collector Hub &rarr;
+            </button>
           </div>
         </div>
       </section>
