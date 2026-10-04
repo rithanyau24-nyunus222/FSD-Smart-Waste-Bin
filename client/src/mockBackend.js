@@ -1,6 +1,6 @@
-import { initialUsers, initialBins, initialComplaints, initialTasks, initialNotifications } from './mockData.js';
+import { initialUsers, initialBins, initialComplaints, initialTasks, initialNotifications, samplePhotos } from './mockData.js';
 
-const STORAGE_KEY = 'smart_waste_db_v2';
+const STORAGE_KEY = 'clean_chennai_waste_v3';
 
 const loadDb = () => {
   try {
@@ -36,8 +36,8 @@ export const resetMockDb = () => {
   return loadDb();
 };
 
-// Helper: distance between two lat/lng in meters (Haversine formula)
-const getDistanceMeters = (lat1, lon1, lat2, lon2) => {
+// Distance between two points in meters (Haversine formula)
+export const getDistanceMeters = (lat1, lon1, lat2, lon2) => {
   const R = 6371e3;
   const rad = Math.PI / 180;
   const dLat = (lat2 - lat1) * rad;
@@ -47,18 +47,6 @@ const getDistanceMeters = (lat1, lon1, lat2, lon2) => {
     Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
-};
-
-// Generate an SVG placeholder waste bin photo
-const getMockPhotoUrl = () => {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
-    <rect width="100%" height="100%" fill="#1B0A4F"/>
-    <circle cx="300" cy="180" r="90" fill="#D6455D" opacity="0.8"/>
-    <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" font-size="64" fill="#fff">🗑️</text>
-    <text x="50%" y="70%" dominant-baseline="middle" text-anchor="middle" font-size="20" font-family="sans-serif" font-weight="bold" fill="#FCEE21">SMART BIN REPORT INCIDENT</text>
-    <text x="50%" y="82%" dominant-baseline="middle" text-anchor="middle" font-size="14" font-family="sans-serif" fill="#A9B6C4">Live Field Capture · Greater Chennai Corporation</text>
-  </svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 };
 
 export const handleMockApi = async (endpoint, options = {}) => {
@@ -71,7 +59,7 @@ export const handleMockApi = async (endpoint, options = {}) => {
   const [path, queryString] = endpoint.replace(/^\/api/, '').split('?');
   const params = new URLSearchParams(queryString || '');
 
-  // Simulate realistic network latency for fluid UX
+  // Simulate realistic snappy network latency
   await new Promise((resolve) => setTimeout(resolve, 80));
 
   /* ---------------- AUTH ---------------- */
@@ -86,17 +74,13 @@ export const handleMockApi = async (endpoint, options = {}) => {
       throw err;
     }
 
-    // Default password check
     if (password !== 'Demo@123' && user.password && user.password !== password) {
-      const err = new Error('Invalid email or password. (Demo password: Demo@123)');
+      const err = new Error('Invalid credentials. (Demo password is Demo@123)');
       err.status = 401;
       throw err;
     }
 
-    return {
-      token: user._id,
-      user
-    };
+    return { token: user._id, user };
   }
 
   if (path === '/auth/register' && method === 'POST') {
@@ -119,11 +103,7 @@ export const handleMockApi = async (endpoint, options = {}) => {
 
     db.users.push(newUser);
     saveDb(db);
-
-    return {
-      token: newUser._id,
-      user: newUser
-    };
+    return { token: newUser._id, user: newUser };
   }
 
   if (path === '/auth/me') {
@@ -132,48 +112,42 @@ export const handleMockApi = async (endpoint, options = {}) => {
       err.status = 401;
       throw err;
     }
-    const user = db.users.find((u) => u._id === token);
-    if (!user) {
-      const err = new Error('User not found');
-      err.status = 404;
-      throw err;
-    }
+    const user = db.users.find((u) => u._id === token) || db.users[0];
     return { user };
   }
 
   /* ---------------- STATS ---------------- */
   if (path === '/stats/public') {
     return {
-      totalComplaints: db.complaints.length,
+      totalComplaints: db.complaints.filter((c) => c.status !== 'Merged').length,
       collectedComplaints: db.complaints.filter((c) => c.status === 'Collected').length,
-      totalBins: db.bins.length
+      totalBins: db.bins.length,
+      highRiskHazards: db.complaints.filter((c) => c.riskLevel === 'critical' && c.status !== 'Collected').length
     };
   }
 
   if (path === '/stats') {
     const counts = {
+      total: db.complaints.filter((c) => c.status !== 'Merged').length,
       pending: db.complaints.filter((c) => c.status === 'Pending').length,
       verified: db.complaints.filter((c) => c.status === 'Verified').length,
       inProgress: db.complaints.filter((c) => ['Assigned', 'In Progress'].includes(c.status)).length,
       collected: db.complaints.filter((c) => c.status === 'Collected').length,
+      criticalHazards: db.complaints.filter((c) => c.riskLevel === 'critical' && c.status !== 'Collected').length,
       criticalBins: db.bins.filter((b) => b.fillLevel >= 80).length
     };
 
-    // 7-day complaint activity
     const activityTrend = [
-      { day: 'Mon', count: 4 },
-      { day: 'Tue', count: 7 },
-      { day: 'Wed', count: 5 },
-      { day: 'Thu', count: 9 },
-      { day: 'Fri', count: 6 },
-      { day: 'Sat', count: 8 },
-      { day: 'Sun', count: 3 }
+      { day: 'Mon', count: 5 },
+      { day: 'Tue', count: 8 },
+      { day: 'Wed', count: 6 },
+      { day: 'Thu', count: 11 },
+      { day: 'Fri', count: 7 },
+      { day: 'Sat', count: 12 },
+      { day: 'Sun', count: 4 }
     ];
 
-    return {
-      counts,
-      activityTrend
-    };
+    return { counts, activityTrend };
   }
 
   /* ---------------- BINS ---------------- */
@@ -182,20 +156,13 @@ export const handleMockApi = async (endpoint, options = {}) => {
   }
 
   if (path === '/bins/simulate' && method === 'POST') {
-    // Randomize fill levels realistically
     db.bins = db.bins.map((bin) => {
-      const delta = (Math.random() - 0.3) * 20; // tendency to increase
+      const delta = (Math.random() - 0.25) * 20;
       const newLevel = Math.max(5, Math.min(100, Math.round(bin.fillLevel + delta)));
-      return {
-        ...bin,
-        fillLevel: newLevel
-      };
+      return { ...bin, fillLevel: newLevel };
     });
     saveDb(db);
-    return {
-      message: 'Sensor telemetry simulation completed',
-      bins: db.bins
-    };
+    return { message: 'Sensor telemetry updated across Chennai smart bins', bins: db.bins };
   }
 
   /* ---------------- USERS (COLLECTORS) ---------------- */
@@ -203,11 +170,90 @@ export const handleMockApi = async (endpoint, options = {}) => {
     return db.users.filter((u) => u.role === 'collector');
   }
 
+  /* ---------------- DUPLICATE DETECTION & MERGE ---------------- */
+  if (path === '/complaints/duplicates' && method === 'GET') {
+    const openComplaints = db.complaints.filter((c) => ['Pending', 'Verified'].includes(c.status));
+    const duplicatePairs = [];
+    const pairedIds = new Set();
+
+    for (let i = 0; i < openComplaints.length; i++) {
+      for (let j = i + 1; j < openComplaints.length; j++) {
+        const c1 = openComplaints[i];
+        const c2 = openComplaints[j];
+
+        if (c1.location?.coordinates && c2.location?.coordinates) {
+          const [lon1, lat1] = c1.location.coordinates;
+          const [lon2, lat2] = c2.location.coordinates;
+          const dist = getDistanceMeters(lat1, lon1, lat2, lon2);
+
+          // Within 50 meters counts as a duplicate candidate
+          if (dist <= 50) {
+            duplicatePairs.push({
+              primary: c1,
+              duplicate: c2,
+              distanceMeters: Math.round(dist)
+            });
+            pairedIds.add(c1._id);
+            pairedIds.add(c2._id);
+          }
+        }
+      }
+    }
+
+    return duplicatePairs;
+  }
+
+  if (path === '/complaints/merge-duplicates' && method === 'POST') {
+    const { primaryId, duplicateId, note } =
+      typeof options.body === 'string' ? JSON.parse(options.body) : options.body || {};
+
+    const primary = db.complaints.find((c) => c._id === primaryId);
+    const duplicate = db.complaints.find((c) => c._id === duplicateId);
+
+    if (!primary || !duplicate) {
+      const err = new Error('Primary or duplicate complaint not found');
+      err.status = 404;
+      throw err;
+    }
+
+    // Mark duplicate as merged
+    duplicate.status = 'Merged';
+    duplicate.history.push({
+      status: 'Merged',
+      by: currentUser,
+      note: `Merged into Master Ticket #${primary._id.slice(-6)} by Municipal Authority. ${note || ''}`,
+      at: new Date().toISOString()
+    });
+
+    // Update primary complaint
+    primary.duplicateCount = (primary.duplicateCount || 0) + 1;
+    primary.history.push({
+      status: primary.status,
+      by: currentUser,
+      note: `Linked duplicate report #${duplicate._id.slice(-6)} submitted by ${duplicate.reporter?.name || 'citizen'}. Combined into single dispatch ticket.`,
+      at: new Date().toISOString()
+    });
+
+    // Add audit notification
+    db.notifications.unshift({
+      _id: `notif_${Date.now()}`,
+      user: currentUser._id,
+      type: 'duplicate_merged',
+      title: 'Duplicate Reports Merged',
+      message: `Merged 2 nearby reports at ${primary.areaName || primary.bin?.area || 'Chennai'}. Single task maintained.`,
+      read: false,
+      createdAt: new Date().toISOString()
+    });
+
+    saveDb(db);
+    return { success: true, primary, duplicate };
+  }
+
   /* ---------------- COMPLAINTS ---------------- */
   if (path === '/complaints' && method === 'GET') {
     let result = [...db.complaints];
 
-    // Filter by role: citizen sees own, authority/collector sees all
+    // Citizen sees only own, authority/collector sees all
     if (currentUser?.role === 'citizen') {
       result = result.filter(
         (c) =>
@@ -217,13 +263,16 @@ export const handleMockApi = async (endpoint, options = {}) => {
     }
 
     const statusFilter = params.get('status');
-    if (statusFilter) {
+    if (statusFilter && statusFilter !== 'All') {
       result = result.filter((c) => c.status.toLowerCase() === statusFilter.toLowerCase());
+    } else {
+      // By default hide merged from normal list unless requested
+      result = result.filter((c) => c.status !== 'Merged');
     }
 
-    const priorityFilter = params.get('priority');
-    if (priorityFilter) {
-      result = result.filter((c) => c.priority?.toLowerCase() === priorityFilter.toLowerCase());
+    const riskFilter = params.get('risk');
+    if (riskFilter && riskFilter !== 'All') {
+      result = result.filter((c) => (c.riskLevel || '').toLowerCase() === riskFilter.toLowerCase());
     }
 
     const search = params.get('search');
@@ -232,6 +281,7 @@ export const handleMockApi = async (endpoint, options = {}) => {
       result = result.filter(
         (c) =>
           c.description.toLowerCase().includes(s) ||
+          (c.areaName && c.areaName.toLowerCase().includes(s)) ||
           c.bin?.area?.toLowerCase().includes(s) ||
           c.bin?.address?.toLowerCase().includes(s)
       );
@@ -251,20 +301,29 @@ export const handleMockApi = async (endpoint, options = {}) => {
     return complaint;
   }
 
+  // Create new citizen complaint with photo & AI analysis
   if (path === '/complaints' && method === 'POST') {
     let description = '';
     let severity = 'medium';
+    let riskLevel = 'medium';
     let lat = 13.0827;
     let lng = 80.2707;
-    let confirmDuplicate = false;
-    let photoUrl = getMockPhotoUrl();
+    let areaName = 'Chennai Central';
+    let photoUrl = samplePhotos.bin_overflow;
+    let analysis = {
+      category: 'General Waste Overflow',
+      estimatedWeight: '50-70 kg',
+      spillRadius: '3 meters',
+      drainageThreat: 'Moderate'
+    };
 
     if (options.body instanceof FormData) {
       description = options.body.get('description') || '';
       severity = options.body.get('severity') || 'medium';
+      riskLevel = options.body.get('riskLevel') || severity;
       lat = parseFloat(options.body.get('lat') || '13.0827');
       lng = parseFloat(options.body.get('lng') || '80.2707');
-      confirmDuplicate = options.body.get('confirmDuplicate') === 'true';
+      areaName = options.body.get('areaName') || 'Chennai Central';
 
       const photoFile = options.body.get('photo');
       if (photoFile && photoFile.size > 0 && photoFile instanceof Blob) {
@@ -272,44 +331,26 @@ export const handleMockApi = async (endpoint, options = {}) => {
           photoUrl = await new Promise((res) => {
             const reader = new FileReader();
             reader.onload = () => res(reader.result);
-            reader.onerror = () => res(getMockPhotoUrl());
+            reader.onerror = () => res(samplePhotos.bin_overflow);
             reader.readAsDataURL(photoFile);
           });
         } catch (e) {
-          photoUrl = getMockPhotoUrl();
+          photoUrl = samplePhotos.bin_overflow;
         }
       }
     } else {
       const parsed = typeof options.body === 'string' ? JSON.parse(options.body) : options.body || {};
       description = parsed.description || '';
       severity = parsed.severity || 'medium';
+      riskLevel = parsed.riskLevel || severity;
       lat = parsed.lat || 13.0827;
       lng = parsed.lng || 80.2707;
-      confirmDuplicate = parsed.confirmDuplicate === true;
+      areaName = parsed.areaName || 'Chennai Central';
+      if (parsed.photo) photoUrl = parsed.photo;
+      if (parsed.analysis) analysis = parsed.analysis;
     }
 
-    // Duplicate detection within 30 meters
-    if (!confirmDuplicate) {
-      const openReports = db.complaints.filter((c) => ['Pending', 'Verified', 'Assigned'].includes(c.status));
-      for (const open of openReports) {
-        if (open.location?.coordinates) {
-          const [cLng, cLat] = open.location.coordinates;
-          const dist = getDistanceMeters(lat, lng, cLat, cLng);
-          if (dist <= 30) {
-            const err = new Error('A duplicate report has already been logged nearby.');
-            err.status = 409;
-            err.data = {
-              duplicate: true,
-              complaint: open,
-              distanceMeters: Math.round(dist)
-            };
-            throw err;
-          }
-        }
-      }
-    }
-
-    // Find nearest bin
+    // Auto-detect nearest smart bin
     let nearestBin = db.bins[0];
     let minDistance = Infinity;
     for (const b of db.bins) {
@@ -323,22 +364,55 @@ export const handleMockApi = async (endpoint, options = {}) => {
       }
     }
 
+    // Dynamic AI Analysis derivation if not supplied
+    if (!analysis.category || analysis.category === 'General Waste Overflow') {
+      const descLower = description.toLowerCase();
+      if (descLower.includes('drain') || descLower.includes('flood') || descLower.includes('water')) {
+        analysis = {
+          category: 'Drainage Hazard / Plastic Blockage',
+          estimatedWeight: '60 kg',
+          spillRadius: '3.5 meters',
+          drainageThreat: 'CRITICAL (Immediate Monsoon Flood Threat)'
+        };
+        riskLevel = 'critical';
+      } else if (descLower.includes('market') || descLower.includes('crate') || descLower.includes('commercial')) {
+        analysis = {
+          category: 'Commercial Crates & Packaging',
+          estimatedWeight: '130 kg',
+          spillRadius: '5 meters',
+          drainageThreat: 'Moderate'
+        };
+        riskLevel = 'high';
+      } else if (descLower.includes('dog') || descLower.includes('animal') || descLower.includes('smell')) {
+        analysis = {
+          category: 'Organic Food Waste & Animal Hazard',
+          estimatedWeight: '80 kg',
+          spillRadius: '4 meters',
+          drainageThreat: 'High Sanitation Hazard'
+        };
+        riskLevel = 'high';
+      }
+    }
+
     const newComplaint = {
       _id: `cmp_${Date.now()}`,
       reporter: currentUser,
       bin: nearestBin,
       description,
       severity,
-      priority: severity === 'high' ? 'high' : 'medium',
+      riskLevel,
+      priority: riskLevel === 'critical' ? 'critical' : riskLevel === 'high' ? 'high' : 'medium',
       photo: photoUrl,
+      analysis,
       location: { type: 'Point', coordinates: [lng, lat] },
+      areaName,
       status: 'Pending',
       createdAt: new Date().toISOString(),
       history: [
         {
           status: 'Pending',
           by: currentUser,
-          note: 'Report submitted by citizen via web application',
+          note: `Citizen photo uploaded. Automated image analysis: ${analysis.category}, Risk: ${riskLevel.toUpperCase()}`,
           at: new Date().toISOString()
         }
       ]
@@ -346,15 +420,15 @@ export const handleMockApi = async (endpoint, options = {}) => {
 
     db.complaints.unshift(newComplaint);
 
-    // Push notification to authority
+    // Notify authority
     const authUser = db.users.find((u) => u.role === 'authority');
     if (authUser) {
       db.notifications.unshift({
         _id: `notif_${Date.now()}`,
         user: authUser._id,
         type: 'new_complaint',
-        title: 'New Bin Report Logged',
-        message: `A new report has been logged near ${nearestBin.area} (${nearestBin.code}).`,
+        title: 'New Waste Report Logged in Chennai',
+        message: `Report logged at ${areaName}. Risk level assessed as ${riskLevel.toUpperCase()}.`,
         read: false,
         createdAt: new Date().toISOString()
       });
@@ -364,9 +438,37 @@ export const handleMockApi = async (endpoint, options = {}) => {
     return newComplaint;
   }
 
+  /* ---------------- RISK LEVEL ASSESSMENT ---------------- */
+  if (path.match(/^\/complaints\/([a-zA-Z0-9_-]+)\/risk$/) && method === 'PATCH') {
+    const id = path.split('/')[2];
+    const { riskLevel, note } = typeof options.body === 'string' ? JSON.parse(options.body) : options.body || {};
+    const complaint = db.complaints.find((c) => c._id === id);
+
+    if (!complaint) {
+      const err = new Error('Complaint not found');
+      err.status = 404;
+      throw err;
+    }
+
+    complaint.riskLevel = riskLevel || 'medium';
+    complaint.priority = riskLevel === 'critical' ? 'critical' : riskLevel === 'high' ? 'high' : 'medium';
+    complaint.status = 'Verified';
+    complaint.history.push({
+      status: 'Verified',
+      by: currentUser,
+      note: `Municipal Authority assessed risk as: ${complaint.riskLevel.toUpperCase()}. ${note || ''}`,
+      at: new Date().toISOString()
+    });
+
+    saveDb(db);
+    return complaint;
+  }
+
+  /* ---------------- VERIFY / REJECT ---------------- */
   if (path.match(/^\/complaints\/([a-zA-Z0-9_-]+)\/verify$/) && method === 'PATCH') {
     const id = path.split('/')[2];
-    const { priority } = typeof options.body === 'string' ? JSON.parse(options.body) : options.body || {};
+    const { priority, riskLevel, note } =
+      typeof options.body === 'string' ? JSON.parse(options.body) : options.body || {};
     const complaint = db.complaints.find((c) => c._id === id);
 
     if (!complaint) {
@@ -376,11 +478,12 @@ export const handleMockApi = async (endpoint, options = {}) => {
     }
 
     complaint.status = 'Verified';
+    if (riskLevel) complaint.riskLevel = riskLevel;
     complaint.priority = priority || complaint.priority || 'high';
     complaint.history.push({
       status: 'Verified',
       by: currentUser,
-      note: `Verified by Municipal Authority with priority ${complaint.priority.toUpperCase()}`,
+      note: note || `Verified by Municipal Authority with risk ${complaint.riskLevel?.toUpperCase() || 'HIGH'}`,
       at: new Date().toISOString()
     });
 
@@ -403,7 +506,7 @@ export const handleMockApi = async (endpoint, options = {}) => {
     complaint.history.push({
       status: 'Rejected',
       by: currentUser,
-      note: `Rejected: ${reason || 'Does not qualify as a municipal hazard'}`,
+      note: `Rejected: ${reason || 'Not deemed an actionable hazard'}`,
       at: new Date().toISOString()
     });
 
@@ -411,7 +514,7 @@ export const handleMockApi = async (endpoint, options = {}) => {
     return complaint;
   }
 
-  /* ---------------- TASKS ---------------- */
+  /* ---------------- TASKS & DAILY SCHEDULE ---------------- */
   if (path === '/tasks' && method === 'GET') {
     let tasks = [...db.tasks];
     if (currentUser?.role === 'collector') {
@@ -421,7 +524,7 @@ export const handleMockApi = async (endpoint, options = {}) => {
   }
 
   if (path === '/tasks' && method === 'POST') {
-    const { complaintId, collectorId } =
+    const { complaintId, collectorId, notes } =
       typeof options.body === 'string' ? JSON.parse(options.body) : options.body || {};
     const complaint = db.complaints.find((c) => c._id === complaintId);
     const collector = db.users.find((u) => u._id === collectorId);
@@ -436,7 +539,7 @@ export const handleMockApi = async (endpoint, options = {}) => {
     complaint.history.push({
       status: 'Assigned',
       by: currentUser,
-      note: `Dispatched to sanitation worker ${collector.name}`,
+      note: `Added to Daily Route for driver ${collector.name}. Priority: ${complaint.priority?.toUpperCase() || 'HIGH'}`,
       at: new Date().toISOString()
     });
 
@@ -445,18 +548,20 @@ export const handleMockApi = async (endpoint, options = {}) => {
       complaint,
       assignedTo: collector,
       status: 'assigned',
-      assignedAt: new Date().toISOString()
+      stopNumber: db.tasks.filter((t) => t.assignedTo?._id === collector._id && t.status !== 'collected').length + 1,
+      priority: complaint.priority || 'high',
+      assignedAt: new Date().toISOString(),
+      notes: notes || 'Assigned in daily morning municipal dispatch'
     };
 
     db.tasks.unshift(newTask);
 
-    // Notification to collector
     db.notifications.unshift({
       _id: `notif_${Date.now()}`,
       user: collector._id,
       type: 'task_assigned',
-      title: 'New Collection Task',
-      message: `You have been assigned to clear bin at ${complaint.bin?.address || 'Chennai'}.`,
+      title: 'New Daily Task Assigned',
+      message: `Stop assigned at ${complaint.areaName || complaint.bin?.area || 'Chennai'}. Risk: ${complaint.riskLevel?.toUpperCase() || 'HIGH'}.`,
       read: false,
       createdAt: new Date().toISOString()
     });
@@ -465,9 +570,11 @@ export const handleMockApi = async (endpoint, options = {}) => {
     return newTask;
   }
 
+  /* ---------------- CLOSED VERIFICATION LOOP ---------------- */
   if (path.match(/^\/tasks\/([a-zA-Z0-9_-]+)\/status$/) && method === 'PATCH') {
     const id = path.split('/')[2];
-    const { status } = typeof options.body === 'string' ? JSON.parse(options.body) : options.body || {};
+    const { status, proofNote, proofPhoto } =
+      typeof options.body === 'string' ? JSON.parse(options.body) : options.body || {};
     const task = db.tasks.find((t) => t._id === id);
 
     if (!task) {
@@ -486,18 +593,22 @@ export const handleMockApi = async (endpoint, options = {}) => {
         complaint.history.push({
           status: 'In Progress',
           by: currentUser,
-          note: `Collector ${currentUser.name} has initiated collection`,
+          note: `Driver ${currentUser.name} en route / initiated collection at location.`,
           at: new Date().toISOString()
         });
       }
     } else if (status === 'collected') {
       task.completedAt = new Date().toISOString();
+      task.proofNote = proofNote || 'Waste cleared, pavement swept, disinfectant applied.';
+      task.proofPhoto = proofPhoto || samplePhotos.cleaned_proof;
+
       if (complaint) {
         complaint.status = 'Collected';
+        complaint.photoProof = task.proofPhoto;
         complaint.history.push({
           status: 'Collected',
           by: currentUser,
-          note: `Waste cleared and collected. Smart bin reset to 5% capacity.`,
+          note: `CLOSED-LOOP VERIFIED: ${task.proofNote}`,
           at: new Date().toISOString()
         });
 
@@ -509,15 +620,15 @@ export const handleMockApi = async (endpoint, options = {}) => {
           bin.lastCollectedAt = new Date().toISOString();
         }
 
-        // Notification to citizen
+        // Notify citizen
         const reporterId = complaint.reporter?._id || complaint.reporter;
         if (reporterId) {
           db.notifications.unshift({
             _id: `notif_${Date.now()}`,
             user: reporterId,
             type: 'complaint_collected',
-            title: 'Your Report Has Been Resolved!',
-            message: `The overflowing waste at ${complaint.bin?.address || 'your reported location'} has been cleared.`,
+            title: 'Your Report Has Been Closed-Loop Verified! ✅',
+            message: `The waste reported at ${complaint.areaName || 'your reported location'} has been completely cleared by the sanitation team.`,
             read: false,
             createdAt: new Date().toISOString()
           });
@@ -546,7 +657,6 @@ export const handleMockApi = async (endpoint, options = {}) => {
     return { success: true };
   }
 
-  // Fallback 404
   const err = new Error(`Route ${method} ${path} not found`);
   err.status = 404;
   throw err;

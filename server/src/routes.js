@@ -367,6 +367,110 @@ router.patch(
   })
 );
 
+// Duplicate detection within 50 meters
+router.get(
+  '/complaints/duplicates',
+  protect,
+  authorize('authority'),
+  asyncHandler(async (req, res) => {
+    const openComplaints = await Complaint.find({ status: { $in: ['Pending', 'Verified'] } })
+      .populate('reporter', 'name email area')
+      .populate('bin', 'code area address');
+
+    const duplicatePairs = [];
+
+    for (let i = 0; i < openComplaints.length; i++) {
+      for (let j = i + 1; j < openComplaints.length; j++) {
+        const c1 = openComplaints[i];
+        const c2 = openComplaints[j];
+
+        if (c1.location?.coordinates && c2.location?.coordinates) {
+          const [lon1, lat1] = c1.location.coordinates;
+          const [lon2, lat2] = c2.location.coordinates;
+          // Approximate distance formula in meters
+          const dLat = (lat2 - lat1) * 111320;
+          const dLon = (lon2 - lon1) * 111320 * Math.cos(lat1 * (Math.PI / 180));
+          const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+
+          if (dist <= 50) {
+            duplicatePairs.push({
+              primary: c1,
+              duplicate: c2,
+              distanceMeters: Math.round(dist)
+            });
+          }
+        }
+      }
+    }
+
+    res.json(duplicatePairs);
+  })
+);
+
+// Merge duplicate complaint
+router.post(
+  '/complaints/merge-duplicates',
+  protect,
+  authorize('authority'),
+  asyncHandler(async (req, res) => {
+    const { primaryId, duplicateId } = req.body;
+    const primary = await Complaint.findById(primaryId);
+    const duplicate = await Complaint.findById(duplicateId);
+
+    if (!primary || !duplicate) {
+      return res.status(404).json({ message: 'Primary or duplicate complaint not found' });
+    }
+
+    duplicate.status = 'Merged';
+    duplicate.history.push({
+      status: 'Merged',
+      by: req.user._id,
+      note: `Merged into primary ticket #${primary._id} by Municipal Authority`,
+      at: new Date()
+    });
+    await duplicate.save();
+
+    primary.duplicateCount = (primary.duplicateCount || 0) + 1;
+    primary.history.push({
+      status: primary.status,
+      by: req.user._id,
+      note: `Linked duplicate report #${duplicate._id}. Consolidated into single dispatch.`,
+      at: new Date()
+    });
+    await primary.save();
+
+    res.json({ success: true, primary, duplicate });
+  })
+);
+
+// Assess hazard risk level
+router.patch(
+  '/complaints/:id/risk',
+  protect,
+  authorize('authority'),
+  asyncHandler(async (req, res) => {
+    const { riskLevel } = req.body;
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' });
+    }
+
+    complaint.riskLevel = riskLevel || 'medium';
+    complaint.priority = riskLevel === 'critical' ? 'critical' : riskLevel === 'high' ? 'high' : 'medium';
+    complaint.status = 'Verified';
+    complaint.history.push({
+      status: 'Verified',
+      by: req.user._id,
+      note: `Hazard risk assessed as ${complaint.riskLevel.toUpperCase()} by Municipal Authority`,
+      at: new Date()
+    });
+    await complaint.save();
+
+    res.json(complaint);
+  })
+);
+
 /* =====================================================
    USERS / COLLECTORS
    ===================================================== */
@@ -401,8 +505,8 @@ router.post(
       return res.status(404).json({ message: 'Complaint not found' });
     }
 
-    if (complaint.status !== 'Verified') {
-      return res.status(400).json({ message: `Cannot assign task for complaint in '${complaint.status}' status. Must be Verified.` });
+    if (!['Pending', 'Verified'].includes(complaint.status)) {
+      return res.status(400).json({ message: `Cannot assign task for complaint in '${complaint.status}' status.` });
     }
 
     const collector = await User.findOne({ _id: collectorId, role: 'collector' });
@@ -515,11 +619,15 @@ router.patch(
       }
       task.status = 'collected';
       task.completedAt = new Date();
+      task.proofNote = req.body.proofNote || 'Waste successfully collected and spot swept';
+      task.proofPhoto = req.body.proofPhoto || '';
+
       complaint.status = 'Collected';
+      complaint.photoProof = task.proofPhoto;
       complaint.history.push({
         status: 'Collected',
         by: req.user._id,
-        note: 'Waste successfully collected and bin cleared',
+        note: `CLOSED LOOP VERIFIED: ${task.proofNote}`,
         at: new Date()
       });
 
@@ -533,7 +641,7 @@ router.patch(
 
       await Notification.create({
         user: complaint.reporter,
-        message: 'Your report is now Collected. Thank you for keeping the city clean!'
+        message: 'Your report has been closed-loop verified and collected. Thank you!'
       });
     }
 

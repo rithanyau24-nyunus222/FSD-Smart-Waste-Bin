@@ -1,608 +1,592 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../api.jsx';
-import { CityMap, PredictiveGauge } from '../components.jsx';
+import { CityMap, RiskBadge, StatusBadge } from '../components.jsx';
 
 export const Dashboard = () => {
   const [bins, setBins] = useState([]);
   const [complaints, setComplaints] = useState([]);
   const [collectors, setCollectors] = useState([]);
+  const [duplicates, setDuplicates] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Filter & tab controls
-  const [activeTab, setActiveTab] = useState('incidents'); // incidents | bins | fleet
+  // Tabs: 'map' | 'reports' | 'duplicates' | 'tasks'
+  const [activeTab, setActiveTab] = useState('reports');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [priorityFilter, setPriorityFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItem, setSelectedItem] = useState(null);
 
   // Modals
-  const [verifyModal, setVerifyModal] = useState({ open: false, complaint: null, priority: 'high' });
-  const [rejectModal, setRejectModal] = useState({ open: false, complaint: null, reason: '' });
+  const [riskModal, setRiskModal] = useState({ open: false, complaint: null, riskLevel: 'high' });
   const [dispatchModal, setDispatchModal] = useState({ open: false, complaint: null, collectorId: '' });
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  // Simulation state
-  const [simLevel, setSimLevel] = useState(50);
-  const [simulating, setSimulating] = useState(false);
-
-  const fetchInitialData = async () => {
+  const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsData, binsData, complaintsData, collectorsData] = await Promise.all([
+      const [statsData, binsData, complaintsData, collectorsData, duplicatesData] = await Promise.all([
         apiFetch('/stats'),
         apiFetch('/bins'),
         apiFetch('/complaints'),
-        apiFetch('/users/collectors')
+        apiFetch('/users/collectors'),
+        apiFetch('/complaints/duplicates')
       ]);
 
       setStats(statsData);
       setBins(binsData || []);
       setComplaints(complaintsData || []);
       setCollectors(collectorsData || []);
-      if (binsData && binsData.length > 0) {
-        setSelectedItem(binsData[0]);
-      }
+      setDuplicates(duplicatesData || []);
     } catch (err) {
-      console.error('Failed to load dashboard:', err);
+      console.error('Failed to load dashboard data:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchInitialData();
+    fetchDashboardData();
   }, []);
 
-  // Run IoT Sensor Simulation
-  const handleSimulate = async (multiplier = 1) => {
+  // 1-Click Assess Risk
+  const handleSaveRisk = async () => {
+    if (!riskModal.complaint) return;
     try {
-      setSimulating(true);
-      const res = await apiFetch('/bins/simulate', { method: 'POST' });
-      if (res?.bins) {
-        setBins(res.bins);
-      }
-      const updatedStats = await apiFetch('/stats');
-      setStats(updatedStats);
+      setActionLoading(true);
+      await apiFetch(`/complaints/${riskModal.complaint._id}/risk`, {
+        method: 'PATCH',
+        body: { riskLevel: riskModal.riskLevel }
+      });
+      setRiskModal({ open: false, complaint: null, riskLevel: 'high' });
+      fetchDashboardData();
     } catch (err) {
-      console.error('Simulation error:', err);
+      alert('Could not update risk level: ' + err.message);
     } finally {
-      setSimulating(false);
+      setActionLoading(false);
     }
   };
 
-  // Action: Verify complaint
-  const handleVerify = async () => {
-    if (!verifyModal.complaint) return;
+  // 1-Click Merge & Remove Duplicate
+  const handleMergeDuplicate = async (primaryId, duplicateId) => {
+    if (!window.confirm('Merge this duplicate report into the primary ticket to prevent double truck dispatch?')) return;
     try {
-      const updated = await apiFetch(`/complaints/${verifyModal.complaint._id}/verify`, {
-        method: 'PATCH',
-        body: { priority: verifyModal.priority }
+      setActionLoading(true);
+      await apiFetch('/complaints/merge-duplicates', {
+        method: 'POST',
+        body: { primaryId, duplicateId }
       });
-      setComplaints((prev) => prev.map((c) => (c._id === updated._id ? updated : c)));
-      setVerifyModal({ open: false, complaint: null, priority: 'high' });
-      const updatedStats = await apiFetch('/stats');
-      setStats(updatedStats);
+      alert('Duplicate merged successfully! A single consolidated collection task will be maintained.');
+      fetchDashboardData();
     } catch (err) {
-      alert('Verification failed: ' + err.message);
+      alert('Failed to merge duplicate: ' + err.message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  // Action: Reject complaint
-  const handleReject = async () => {
-    if (!rejectModal.complaint || !rejectModal.reason.trim()) {
-      alert('Please specify a rejection reason');
-      return;
-    }
+  // 1-Click Add to Daily Tasks
+  const handleDispatchTask = async () => {
+    if (!dispatchModal.complaint || !dispatchModal.collectorId) return;
     try {
-      const updated = await apiFetch(`/complaints/${rejectModal.complaint._id}/reject`, {
-        method: 'PATCH',
-        body: { reason: rejectModal.reason }
-      });
-      setComplaints((prev) => prev.map((c) => (c._id === updated._id ? updated : c)));
-      setRejectModal({ open: false, complaint: null, reason: '' });
-      const updatedStats = await apiFetch('/stats');
-      setStats(updatedStats);
-    } catch (err) {
-      alert('Rejection failed: ' + err.message);
-    }
-  };
-
-  // Action: Dispatch task to collector
-  const handleDispatch = async () => {
-    if (!dispatchModal.complaint || !dispatchModal.collectorId) {
-      alert('Please select a collection officer');
-      return;
-    }
-    try {
+      setActionLoading(true);
       await apiFetch('/tasks', {
         method: 'POST',
         body: {
           complaintId: dispatchModal.complaint._id,
-          collectorId: dispatchModal.collectorId
+          collectorId: dispatchModal.collectorId,
+          notes: `Assigned in morning dispatch. Priority: ${(dispatchModal.complaint.riskLevel || 'high').toUpperCase()}`
         }
       });
-      // Refresh complaints list
-      const fresh = await apiFetch('/complaints');
-      setComplaints(fresh || []);
       setDispatchModal({ open: false, complaint: null, collectorId: '' });
-      const updatedStats = await apiFetch('/stats');
-      setStats(updatedStats);
+      alert('Report converted into a Daily Task and dispatched to the driver!');
+      fetchDashboardData();
     } catch (err) {
       alert('Dispatch failed: ' + err.message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  // Filter complaints
   const filteredComplaints = complaints.filter((c) => {
     if (statusFilter !== 'All' && c.status.toLowerCase() !== statusFilter.toLowerCase()) return false;
-    if (priorityFilter !== 'All' && c.priority?.toLowerCase() !== priorityFilter.toLowerCase()) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      const desc = (c.description || '').toLowerCase();
-      const addr = (c.bin?.address || '').toLowerCase();
-      const area = (c.bin?.area || '').toLowerCase();
-      if (!desc.includes(q) && !addr.includes(q) && !area.includes(q)) return false;
+      const descMatch = (c.description || '').toLowerCase().includes(q);
+      const areaMatch = (c.areaName || c.bin?.area || '').toLowerCase().includes(q);
+      if (!descMatch && !areaMatch) return false;
     }
     return true;
   });
 
-  const criticalCount = bins.filter((b) => b.fillLevel >= 80).length;
-  const pendingCount = complaints.filter((c) => c.status === 'Pending').length;
-  const activeCount = complaints.filter((c) => ['Assigned', 'In Progress'].includes(c.status)).length;
-  const collectedCount = complaints.filter((c) => c.status === 'Collected').length;
-
   return (
-    <div className="command-viewport">
-      {/* LEFT SIDEBAR: OPERATIONS & TELEMETRY STREAM */}
-      <aside className="command-sidebar">
-        {/* KPI Telemetry Header */}
-        <div className="telemetry-header">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h2 style={{ fontSize: '1.15rem', color: '#fff', fontFamily: 'var(--font-heading)' }}>
-                Command &amp; Dispatch OS
-              </h2>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Live Stream · Greater Chennai Corporation
-              </span>
-            </div>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '3px 9px',
-                borderRadius: 'var(--radius-full)',
-                background: 'rgba(16, 185, 129, 0.15)',
-                color: 'var(--accent-emerald)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                fontSize: '0.72rem',
-                fontWeight: '700'
-              }}
-            >
-              <span className="radar-pulse green"></span> LIVE TELEMETRY
-            </span>
+    <div className="container" style={{ padding: '36px 20px 80px 20px' }}>
+      {/* Top Municipal Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 12px', borderRadius: 'var(--radius-full)', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--emerald-500)', fontSize: '0.78rem', fontWeight: '700', marginBottom: '8px' }}>
+            🏛️ GREATER CHENNAI CORPORATION (GCC) OPERATIONS
           </div>
-
-          <div className="telemetry-row">
-            <div className="stat-metric">
-              <div className="stat-metric-num" style={{ color: 'var(--accent-rose)' }}>{criticalCount}</div>
-              <div className="stat-metric-label">Critical &gt;80%</div>
-            </div>
-            <div className="stat-metric">
-              <div className="stat-metric-num" style={{ color: 'var(--accent-amber)' }}>{pendingCount}</div>
-              <div className="stat-metric-label">Pending Triage</div>
-            </div>
-            <div className="stat-metric">
-              <div className="stat-metric-num" style={{ color: 'var(--accent-purple)' }}>{activeCount}</div>
-              <div className="stat-metric-label">In Transit</div>
-            </div>
-            <div className="stat-metric">
-              <div className="stat-metric-num" style={{ color: 'var(--accent-emerald)' }}>{collectedCount}</div>
-              <div className="stat-metric-label">Resolved</div>
-            </div>
-          </div>
-        </div>
-
-        {/* IoT Simulation Control Card */}
-        <div className="sim-controls-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontWeight: '700', fontSize: '0.82rem', color: 'var(--accent-cyan)' }}>
-              ⚡ IoT Sensor Simulation Hub
-            </span>
-            <button
-              type="button"
-              onClick={() => handleSimulate()}
-              disabled={simulating}
-              className="btn-cyan"
-              style={{ padding: '4px 12px', fontSize: '0.75rem', borderRadius: 'var(--radius-full)' }}
-            >
-              {simulating ? 'Pulsing...' : '📡 Inject Telemetry'}
-            </button>
-          </div>
-          <p style={{ fontSize: '0.74rem', color: 'var(--text-dim)', marginBottom: '10px' }}>
-            Test live triggers, overflow alarms, and map radar pings across all 12 smart sensors:
+          <h1 style={{ fontSize: '1.9rem', fontFamily: 'var(--font-heading)', color: '#fff', letterSpacing: '-0.02em' }}>
+            Municipal Review &amp; Dispatch Hub
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            Review citizen incident photos, eliminate duplicate reports, assess hazard risk, and assign daily collection tasks.
           </p>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <button
-              type="button"
-              onClick={() => handleSimulate(0.8)}
-              className="btn-secondary"
-              style={{ flex: 1, padding: '5px', fontSize: '0.72rem' }}
-            >
-              🟢 Normal Load
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSimulate(1.3)}
-              className="btn-secondary"
-              style={{ flex: 1, padding: '5px', fontSize: '0.72rem' }}
-            >
-              🟡 Rush Hour (+25%)
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSimulate(2.0)}
-              className="btn-secondary"
-              style={{ flex: 1, padding: '5px', fontSize: '0.72rem' }}
-            >
-              🔴 Monsoon Overflow
-            </button>
+        </div>
+
+        <button
+          type="button"
+          className="btn-secondary btn-sm"
+          onClick={fetchDashboardData}
+          disabled={loading}
+        >
+          🔄 Refresh Live Feed
+        </button>
+      </div>
+
+      {/* KPI Counters */}
+      <div className="stats-grid">
+        <div className="stat-box">
+          <div className="stat-box-icon">📬</div>
+          <div>
+            <div className="stat-box-num">{stats ? stats.counts.pending : '...'}</div>
+            <div className="stat-box-label">Pending Verification</div>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', padding: '0 24px' }}>
-          <button
-            type="button"
-            onClick={() => setActiveTab('incidents')}
-            style={{
-              padding: '12px 14px',
-              borderBottom: activeTab === 'incidents' ? '2px solid var(--accent-cyan)' : '2px solid transparent',
-              color: activeTab === 'incidents' ? '#fff' : 'var(--text-muted)',
-              fontWeight: '600',
-              fontSize: '0.84rem'
-            }}
-          >
-            🚨 Incident Queue ({filteredComplaints.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('bins')}
-            style={{
-              padding: '12px 14px',
-              borderBottom: activeTab === 'bins' ? '2px solid var(--accent-cyan)' : '2px solid transparent',
-              color: activeTab === 'bins' ? '#fff' : 'var(--text-muted)',
-              fontWeight: '600',
-              fontSize: '0.84rem'
-            }}
-          >
-            🗑️ 12 Smart Bins
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('fleet')}
-            style={{
-              padding: '12px 14px',
-              borderBottom: activeTab === 'fleet' ? '2px solid var(--accent-cyan)' : '2px solid transparent',
-              color: activeTab === 'fleet' ? '#fff' : 'var(--text-muted)',
-              fontWeight: '600',
-              fontSize: '0.84rem'
-            }}
-          >
-            🚛 Sanitation Fleet ({collectors.length})
-          </button>
+        <div className="stat-box">
+          <div className="stat-box-icon" style={{ color: 'var(--rose-500)' }}>⚠️</div>
+          <div>
+            <div className="stat-box-num">{stats ? stats.counts.criticalHazards : '...'}</div>
+            <div className="stat-box-label">Critical Risk Hazards</div>
+          </div>
         </div>
 
-        {/* TAB 1: INCIDENTS QUEUE */}
-        {activeTab === 'incidents' && (
-          <>
-            {/* Search & Filter Controls */}
-            <div style={{ padding: '14px 24px 8px 24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="stat-box">
+          <div className="stat-box-icon" style={{ color: 'var(--amber-500)' }}>🔗</div>
+          <div>
+            <div className="stat-box-num">{duplicates.length}</div>
+            <div className="stat-box-label">Duplicate Clusters</div>
+          </div>
+        </div>
+
+        <div className="stat-box">
+          <div className="stat-box-icon" style={{ color: 'var(--blue-500)' }}>🚛</div>
+          <div>
+            <div className="stat-box-num">{stats ? stats.counts.inProgress : '...'}</div>
+            <div className="stat-box-label">Daily Tasks in Field</div>
+          </div>
+        </div>
+
+        <div className="stat-box">
+          <div className="stat-box-icon" style={{ color: 'var(--emerald-500)' }}>✅</div>
+          <div>
+            <div className="stat-box-num">{stats ? stats.counts.collected : '...'}</div>
+            <div className="stat-box-label">Closed-Loop Verified</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Clean Operations Tabs */}
+      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-subtle)', marginBottom: '24px', flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          className={`nav-link ${activeTab === 'reports' ? 'active' : ''}`}
+          style={{ fontSize: '0.95rem', padding: '10px 18px', borderBottom: activeTab === 'reports' ? '2px solid var(--emerald-500)' : 'none' }}
+          onClick={() => setActiveTab('reports')}
+        >
+          📸 Review Stored Reports ({filteredComplaints.length})
+        </button>
+
+        <button
+          type="button"
+          className={`nav-link ${activeTab === 'map' ? 'active' : ''}`}
+          style={{ fontSize: '0.95rem', padding: '10px 18px', borderBottom: activeTab === 'map' ? '2px solid var(--emerald-500)' : 'none' }}
+          onClick={() => setActiveTab('map')}
+        >
+          🗺️ Live Chennai Waste Map
+        </button>
+
+        <button
+          type="button"
+          className={`nav-link ${activeTab === 'duplicates' ? 'active' : ''}`}
+          style={{ fontSize: '0.95rem', padding: '10px 18px', borderBottom: activeTab === 'duplicates' ? '2px solid var(--emerald-500)' : 'none' }}
+          onClick={() => setActiveTab('duplicates')}
+        >
+          🔍 Duplicate Detection &amp; Removal
+          {duplicates.length > 0 && (
+            <span style={{ marginLeft: '6px', background: 'var(--amber-500)', color: '#000', fontSize: '11px', fontWeight: '800', padding: '2px 6px', borderRadius: '10px' }}>
+              {duplicates.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* TAB 1: REVIEW STORED REPORTS */}
+      {activeTab === 'reports' && (
+        <div>
+          {/* Filter Bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {['All', 'Pending', 'Verified', 'Assigned', 'In Progress', 'Collected'].map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  className={`btn-secondary btn-sm ${statusFilter === st ? 'active' : ''}`}
+                  style={{
+                    background: statusFilter === st ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    borderColor: statusFilter === st ? 'var(--emerald-500)' : 'var(--border-subtle)',
+                    color: statusFilter === st ? '#fff' : 'var(--text-secondary)'
+                  }}
+                  onClick={() => setStatusFilter(st)}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ width: '280px' }}>
               <input
                 type="text"
-                placeholder="Search incidents by address or note..."
+                placeholder="Search by area or waste type..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="form-input"
-                style={{ padding: '8px 12px', fontSize: '0.82rem' }}
+                style={{ padding: '8px 12px', fontSize: '0.88rem' }}
               />
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="form-select"
-                  style={{ flex: 1, padding: '6px 10px', fontSize: '0.78rem' }}
-                >
-                  <option value="All">All Statuses</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Verified">Verified</option>
-                  <option value="Assigned">Assigned</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Collected">Collected</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
-                <select
-                  value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value)}
-                  className="form-select"
-                  style={{ flex: 1, padding: '6px 10px', fontSize: '0.78rem' }}
-                >
-                  <option value="All">All Priorities</option>
-                  <option value="critical">Critical</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
+            </div>
+          </div>
+
+          {/* Reports Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '20px' }}>
+            {filteredComplaints.length === 0 ? (
+              <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+                No reports found matching your filter criteria.
               </div>
-            </div>
+            ) : (
+              filteredComplaints.map((c) => (
+                <div key={c._id} className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+                  {/* Photo with Overlay Badge */}
+                  <div className="waste-photo-frame" style={{ height: '200px', marginBottom: '14px' }}>
+                    <img src={c.photo} alt="Reported waste" />
+                    <div className="photo-badge-overlay" style={{ display: 'flex', gap: '6px' }}>
+                      <RiskBadge level={c.riskLevel || 'medium'} />
+                      <StatusBadge status={c.status} />
+                    </div>
+                  </div>
 
-            {/* Incident List */}
-            <div className="incident-list">
-              {filteredComplaints.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-                  No reports matching filter criteria
+                  {/* Header info */}
+                  <div style={{ marginBottom: '8px' }}>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
+                      📍 {c.areaName || c.bin?.area || 'Chennai Location'} · Reported {new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                    <div style={{ fontWeight: '600', color: '#fff', fontSize: '0.95rem', lineHeight: '1.4' }}>
+                      {c.description}
+                    </div>
+                  </div>
+
+                  {/* AI Analysis Pill */}
+                  {c.analysis && (
+                    <div style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: 'var(--radius-sm)', padding: '8px 10px', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                      <strong>AI Analysis:</strong> {c.analysis.category} · {c.analysis.estimatedWeight}
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: 'auto', paddingTop: '14px', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {/* Assess Risk button */}
+                    <button
+                      type="button"
+                      className="btn-secondary btn-sm"
+                      onClick={() => setRiskModal({ open: true, complaint: c, riskLevel: c.riskLevel || 'high' })}
+                      title="Update risk assessment for this report"
+                    >
+                      ⚖️ Set Risk
+                    </button>
+
+                    {/* Dispatch to Driver button */}
+                    {['Pending', 'Verified'].includes(c.status) && (
+                      <button
+                        type="button"
+                        className="btn-primary btn-sm"
+                        onClick={() => setDispatchModal({ open: true, complaint: c, collectorId: collectors[0]?._id || '' })}
+                      >
+                        🚛 Assign to Daily Task
+                      </button>
+                    )}
+
+                    {['Assigned', 'In Progress'].includes(c.status) && (
+                      <span style={{ fontSize: '0.8rem', color: 'var(--blue-500)', fontWeight: '600' }}>
+                        Driver Dispatched
+                      </span>
+                    )}
+
+                    {c.status === 'Collected' && (
+                      <span style={{ fontSize: '0.8rem', color: 'var(--emerald-500)', fontWeight: '600' }}>
+                        ✅ Verified Cleaned
+                      </span>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                filteredComplaints.map((c) => {
-                  const isSelected = selectedItem?._id === c._id;
-                  return (
-                    <div
-                      key={c._id}
-                      className={`incident-card ${isSelected ? 'active-selected' : ''}`}
-                      onClick={() => setSelectedItem(c)}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span className={`status-chip ${c.status.toLowerCase().replace(' ', '-')}`}>
-                          {c.status}
-                        </span>
-                        {c.priority && (
-                          <span className={`priority-pill ${c.priority.toLowerCase()}`}>
-                            {c.priority}
-                          </span>
-                        )}
-                      </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
-                      <div style={{ fontWeight: '600', fontSize: '0.88rem', color: '#fff', marginBottom: '6px', lineHeight: '1.4' }}>
-                        "{c.description}"
-                      </div>
+      {/* TAB 2: LIVE CHENNAI CITY MAP */}
+      {activeTab === 'map' && (
+        <div>
+          <div style={{ marginBottom: '14px', color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
+            Interactive Chennai GIS grid. Red pins indicate critical risk hazards, amber pins indicate open complaints, and green pins indicate completed collections. Click any pin to inspect the photo and details.
+          </div>
+          <CityMap
+            complaints={complaints}
+            bins={bins}
+            selectedItem={selectedItem}
+            onSelectItem={(item) => setSelectedItem(item)}
+            height="560px"
+          />
+        </div>
+      )}
 
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '10px' }}>
-                        📍 {c.bin?.address || 'Reported Location'} ({c.bin?.area || 'Chennai'})
-                      </div>
+      {/* TAB 3: DUPLICATE DETECTION & REMOVAL */}
+      {activeTab === 'duplicates' && (
+        <div>
+          <div className="duplicate-banner" style={{ marginBottom: '24px' }}>
+            <h3 style={{ color: 'var(--amber-500)', fontSize: '1.1rem', marginBottom: '6px' }}>
+              🔍 Intelligent Proximity Duplicate Detection
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
+              When multiple citizens report the same overflowing bin from different angles, our system flags them based on proximity (within 50 meters). Merging duplicates combines them into a single master ticket, saving municipal fuel and preventing double truck dispatches.
+            </p>
+          </div>
 
-                      {/* Quick Action Buttons for Authority */}
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                        {c.status === 'Pending' && (
-                          <>
-                            <button
-                              type="button"
-                              className="btn-cyan"
-                              style={{ flex: 1, padding: '5px', fontSize: '0.75rem' }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setVerifyModal({ open: true, complaint: c, priority: 'high' });
-                              }}
-                            >
-                              ✓ Verify
-                            </button>
-                            <button
-                              type="button"
-                              className="btn-danger"
-                              style={{ flex: 1, padding: '5px', fontSize: '0.75rem' }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setRejectModal({ open: true, complaint: c, reason: '' });
-                              }}
-                            >
-                              ✕ Reject
-                            </button>
-                          </>
-                        )}
-
-                        {c.status === 'Verified' && (
-                          <button
-                            type="button"
-                            className="btn-primary"
-                            style={{ width: '100%', padding: '6px', fontSize: '0.78rem' }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDispatchModal({ open: true, complaint: c, collectorId: collectors[0]?._id || '' });
-                            }}
-                          >
-                            🚛 Dispatch Sanitation Truck
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+          {duplicates.length === 0 ? (
+            <div className="card" style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-muted)' }}>
+              🎉 No duplicate reports detected! All open complaints are geographically distinct.
             </div>
-          </>
-        )}
-
-        {/* TAB 2: SMART BINS TELEMETRY */}
-        {activeTab === 'bins' && (
-          <div className="incident-list">
-            {bins.map((bin) => {
-              const isSelected = selectedItem?._id === bin._id;
-              const isCritical = bin.fillLevel >= 80;
-              return (
-                <div
-                  key={bin._id}
-                  className={`incident-card ${isSelected ? 'active-selected' : ''}`}
-                  onClick={() => setSelectedItem(bin)}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span className={`radar-pulse ${isCritical ? 'red' : bin.fillLevel >= 50 ? 'amber' : 'green'}`}></span>
-                      <strong style={{ color: '#fff', fontSize: '0.9rem' }}>{bin.code}</strong>
-                    </div>
-                    <span
-                      style={{
-                        fontWeight: '800',
-                        fontSize: '0.82rem',
-                        color: isCritical ? 'var(--accent-rose)' : bin.fillLevel >= 50 ? 'var(--accent-amber)' : 'var(--accent-emerald)'
-                      }}
-                    >
-                      {bin.fillLevel}% FULL
+          ) : (
+            duplicates.map((pair, idx) => (
+              <div key={idx} className="duplicate-pair-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ background: 'var(--amber-500)', color: '#000', fontWeight: '800', fontSize: '11px', padding: '2px 8px', borderRadius: 'var(--radius-full)' }}>
+                      PROXIMITY: {pair.distanceMeters} METERS APART
                     </span>
+                    <strong style={{ color: '#fff', fontSize: '0.95rem' }}>
+                      Duplicate Cluster #{idx + 1}: {pair.primary.areaName || pair.primary.bin?.area}
+                    </strong>
                   </div>
 
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '8px' }}>
-                    {bin.address} ({bin.area})
-                  </div>
-
-                  <PredictiveGauge fillLevel={bin.fillLevel} />
+                  <button
+                    type="button"
+                    className="btn-warning btn-sm"
+                    disabled={actionLoading}
+                    onClick={() => handleMergeDuplicate(pair.primary._id, pair.duplicate._id)}
+                  >
+                    🔗 Merge &amp; Remove Duplicate
+                  </button>
                 </div>
-              );
-            })}
-          </div>
-        )}
 
-        {/* TAB 3: SANITATION FLEET */}
-        {activeTab === 'fleet' && (
-          <div className="incident-list">
-            {collectors.map((col) => (
-              <div key={col._id} className="incident-card">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(245, 158, 11, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
-                    🚛
+                {/* Side-by-side comparison */}
+                <div className="duplicate-columns">
+                  {/* Primary Report */}
+                  <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span className="badge badge-verified">Primary Report (#{pair.primary._id.slice(-5)})</span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                        {new Date(pair.primary.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <div className="waste-photo-frame" style={{ height: '180px', marginBottom: '10px' }}>
+                      <img src={pair.primary.photo} alt="Primary report" />
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: '#fff', marginBottom: '4px' }}>
+                      {pair.primary.description}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Reported by: {pair.primary.reporter?.name || 'Citizen'}
+                    </div>
                   </div>
-                  <div>
-                    <div style={{ fontWeight: '700', color: '#fff', fontSize: '0.9rem' }}>{col.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Assigned Area: {col.area}</div>
+
+                  {/* Duplicate Report */}
+                  <div style={{ background: 'rgba(245, 158, 11, 0.04)', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span className="badge badge-high">Potential Duplicate (#{pair.duplicate._id.slice(-5)})</span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                        {new Date(pair.duplicate.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <div className="waste-photo-frame" style={{ height: '180px', marginBottom: '10px' }}>
+                      <img src={pair.duplicate.photo} alt="Duplicate report" />
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: '#fff', marginBottom: '4px' }}>
+                      {pair.duplicate.description}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Reported by: {pair.duplicate.reporter?.name || 'Citizen'}
+                    </div>
                   </div>
-                </div>
-                <div style={{ fontSize: '0.76rem', color: 'var(--accent-emerald)' }}>
-                  ● Active On Shift · Route Proximity Optimized
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </aside>
+            ))
+          )}
+        </div>
+      )}
 
-      {/* RIGHT WORKSPACE: FULL GIS CITY MAP */}
-      <main className="command-map-area">
-        <CityMap
-          bins={bins}
-          complaints={complaints}
-          selectedItem={selectedItem}
-          onSelectBin={(item) => setSelectedItem(item)}
-        />
-      </main>
-
-      {/* VERIFY MODAL */}
-      {verifyModal.open && (
-        <div className="modal-backdrop" onClick={() => setVerifyModal({ open: false, complaint: null, priority: 'high' })}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '10px' }}>Verify Incident &amp; Assign Priority</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '16px' }}>
-              "{verifyModal.complaint?.description}"
+      {/* MODAL 1: ASSESS RISK LEVEL */}
+      {riskModal.open && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3 style={{ fontSize: '1.25rem', color: '#fff', marginBottom: '8px' }}>
+              ⚖️ Assess Municipal Hazard Risk
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px' }}>
+              Set the priority and health hazard risk for ticket #{riskModal.complaint?._id.slice(-6)}:
             </p>
-            <div style={{ marginBottom: '18px' }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                Priority Classification:
-              </label>
-              <select
-                value={verifyModal.priority}
-                onChange={(e) => setVerifyModal((prev) => ({ ...prev, priority: e.target.value }))}
-                className="form-select"
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px',
+                  borderRadius: 'var(--radius-md)',
+                  background: riskModal.riskLevel === 'critical' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                  border: riskModal.riskLevel === 'critical' ? '1px solid var(--rose-500)' : '1px solid var(--border-subtle)',
+                  cursor: 'pointer'
+                }}
               >
-                <option value="critical">🔴 Critical (Immediate Hazard / Blockage)</option>
-                <option value="high">🟡 High (Commercial &amp; High Footfall)</option>
-                <option value="medium">🔵 Medium (Standard Ward Overflow)</option>
-                <option value="low">🟢 Low (Routine Clearance)</option>
-              </select>
+                <input
+                  type="radio"
+                  name="risk"
+                  checked={riskModal.riskLevel === 'critical'}
+                  onChange={() => setRiskModal({ ...riskModal, riskLevel: 'critical' })}
+                />
+                <div>
+                  <strong style={{ color: '#fca5a5' }}>🔴 Critical Hazard</strong>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    Storm drain blockage, medical waste, or severe obstacle near hospitals/schools.
+                  </div>
+                </div>
+              </label>
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px',
+                  borderRadius: 'var(--radius-md)',
+                  background: riskModal.riskLevel === 'high' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                  border: riskModal.riskLevel === 'high' ? '1px solid var(--amber-500)' : '1px solid var(--border-subtle)',
+                  cursor: 'pointer'
+                }}
+              >
+                <input
+                  type="radio"
+                  name="risk"
+                  checked={riskModal.riskLevel === 'high'}
+                  onChange={() => setRiskModal({ ...riskModal, riskLevel: 'high' })}
+                />
+                <div>
+                  <strong style={{ color: '#fcd34d' }}>🟡 High Risk</strong>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    Commercial market garbage spilling onto pavement, attracting stray animals.
+                  </div>
+                </div>
+              </label>
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px',
+                  borderRadius: 'var(--radius-md)',
+                  background: riskModal.riskLevel === 'low' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                  border: riskModal.riskLevel === 'low' ? '1px solid var(--emerald-500)' : '1px solid var(--border-subtle)',
+                  cursor: 'pointer'
+                }}
+              >
+                <input
+                  type="radio"
+                  name="risk"
+                  checked={riskModal.riskLevel === 'low'}
+                  onChange={() => setRiskModal({ ...riskModal, riskLevel: 'low' })}
+                />
+                <div>
+                  <strong style={{ color: '#6ee7b7' }}>🟢 Low Risk / Regular</strong>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    Bin near full capacity, routine collection scheduled within normal hours.
+                  </div>
+                </div>
+              </label>
             </div>
+
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button
                 type="button"
-                className="btn-secondary"
-                onClick={() => setVerifyModal({ open: false, complaint: null, priority: 'high' })}
+                className="btn-secondary btn-sm"
+                onClick={() => setRiskModal({ open: false, complaint: null, riskLevel: 'high' })}
               >
                 Cancel
               </button>
-              <button type="button" className="btn-cyan" onClick={handleVerify}>
-                Confirm Verification
+              <button
+                type="button"
+                className="btn-primary btn-sm"
+                disabled={actionLoading}
+                onClick={handleSaveRisk}
+              >
+                {actionLoading ? 'Saving...' : 'Save Risk Assessment'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* REJECT MODAL */}
-      {rejectModal.open && (
-        <div className="modal-backdrop" onClick={() => setRejectModal({ open: false, complaint: null, reason: '' })}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ fontSize: '1.2rem', color: 'var(--accent-rose)', marginBottom: '10px' }}>Reject Incident Report</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '16px' }}>
-              "{rejectModal.complaint?.description}"
-            </p>
-            <div style={{ marginBottom: '18px' }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                Mandatory Rejection Rationale (Visible to Citizen):
-              </label>
-              <textarea
-                rows="3"
-                value={rejectModal.reason}
-                onChange={(e) => setRejectModal((prev) => ({ ...prev, reason: e.target.value }))}
-                placeholder="e.g. Debris is private property demolition waste. Please contact GCC C&D toll-free."
-                className="form-textarea"
-              />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => setRejectModal({ open: false, complaint: null, reason: '' })}
-              >
-                Cancel
-              </button>
-              <button type="button" className="btn-danger" onClick={handleReject}>
-                Confirm Rejection
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* DISPATCH MODAL */}
+      {/* MODAL 2: ASSIGN TO DAILY TASKS */}
       {dispatchModal.open && (
-        <div className="modal-backdrop" onClick={() => setDispatchModal({ open: false, complaint: null, collectorId: '' })}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '10px' }}>Dispatch Sanitation Truck</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '16px' }}>
-              Assign incident at <strong>{dispatchModal.complaint?.bin?.address || 'Chennai'}</strong> to a sanitation worker:
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3 style={{ fontSize: '1.25rem', color: '#fff', marginBottom: '8px' }}>
+              🚛 Assign to Daily Collection Tasks
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px' }}>
+              Dispatch a sanitation driver to clear the reported waste at <strong>{dispatchModal.complaint?.areaName || 'Chennai'}</strong>:
             </p>
-            <div style={{ marginBottom: '18px' }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                Select Sanitation Officer:
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                Select Field Sanitation Driver:
               </label>
               <select
                 value={dispatchModal.collectorId}
-                onChange={(e) => setDispatchModal((prev) => ({ ...prev, collectorId: e.target.value }))}
-                className="form-select"
+                onChange={(e) => setDispatchModal({ ...dispatchModal, collectorId: e.target.value })}
               >
                 {collectors.map((col) => (
                   <option key={col._id} value={col._id}>
-                    🚛 {col.name} — Area: {col.area}
+                    {col.name} ({col.area})
                   </option>
                 ))}
               </select>
             </div>
+
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button
                 type="button"
-                className="btn-secondary"
+                className="btn-secondary btn-sm"
                 onClick={() => setDispatchModal({ open: false, complaint: null, collectorId: '' })}
               >
                 Cancel
               </button>
-              <button type="button" className="btn-primary" onClick={handleDispatch}>
-                Dispatch Truck
+              <button
+                type="button"
+                className="btn-primary btn-sm"
+                disabled={actionLoading}
+                onClick={handleDispatchTask}
+              >
+                {actionLoading ? 'Assigning...' : 'Dispatch Daily Task'}
               </button>
             </div>
           </div>

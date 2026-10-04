@@ -1,19 +1,59 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import { useAuth, apiFetch } from './api.jsx';
+import { samplePhotos } from './mockData.js';
 
 export const FloatingDecor = () => null;
 
-/* ==========================================================================
-   NAVBAR COMPONENT WITH QUICK PERSONA SWITCHER
-   ========================================================================== */
+/* =====================================================
+   RISK LEVEL BADGE
+   ===================================================== */
+export const RiskBadge = ({ level = 'medium' }) => {
+  const norm = (level || 'medium').toLowerCase();
+  if (norm === 'critical') {
+    return <span className="badge badge-critical">🔴 Critical Hazard</span>;
+  }
+  if (norm === 'high') {
+    return <span className="badge badge-high">🟡 High Risk</span>;
+  }
+  if (norm === 'low') {
+    return <span className="badge badge-low">🟢 Low Risk</span>;
+  }
+  return <span className="badge badge-medium">🔵 Medium Risk</span>;
+};
+
+/* =====================================================
+   STATUS BADGE
+   ===================================================== */
+export const StatusBadge = ({ status }) => {
+  switch (status) {
+    case 'Pending':
+      return <span className="badge badge-high">⏳ Pending Review</span>;
+    case 'Verified':
+      return <span className="badge badge-verified">✓ Verified</span>;
+    case 'Assigned':
+      return <span className="badge badge-in-progress">🚛 Task Assigned</span>;
+    case 'In Progress':
+      return <span className="badge badge-in-progress">⚡ In Progress</span>;
+    case 'Collected':
+      return <span className="badge badge-collected">✅ Closed-Loop Verified</span>;
+    case 'Merged':
+      return <span className="badge badge-merged">🔗 Duplicate Merged</span>;
+    case 'Rejected':
+      return <span className="badge badge-critical">✕ Rejected</span>;
+    default:
+      return <span className="badge badge-medium">{status}</span>;
+  }
+};
+
+/* =====================================================
+   NAVBAR & PERSONA SWITCHER
+   ===================================================== */
 export const Navbar = () => {
-  const { user, login, logout, isDemoMode } = useAuth();
+  const { user, login, logout } = useAuth();
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [personaOpen, setPersonaOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -50,203 +90,166 @@ export const Navbar = () => {
   const switchPersona = async (email) => {
     try {
       await login(email, 'Demo@123');
-      setPersonaOpen(false);
-      setMenuOpen(false);
       if (email.includes('authority')) navigate('/dashboard');
       else if (email.includes('collector')) navigate('/tasks');
       else navigate('/report');
-    } catch (e) {
-      console.error('Persona switch error:', e);
+    } catch (err) {
+      console.error('Persona switch error:', err);
     }
   };
 
   return (
-    <header className="navbar-wrapper">
-      <nav className="navbar container">
-        <Link to="/" className="brand-logo" onClick={() => setMenuOpen(false)}>
-          <div className="brand-icon-wrap">
-            <span>🗑️</span>
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span className="brand-title">SmartBin</span>
-              <span className="brand-badge">Command OS</span>
-            </div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginTop: '-2px' }}>
-              GCC Smart Waste Governance
-            </span>
+    <header className="navbar">
+      <div className="container navbar-container">
+        {/* Brand */}
+        <Link to="/" className="brand-link">
+          <span className="brand-icon">🗑️</span>
+          <div className="brand-text">
+            <span className="brand-title">CleanChennai</span>
+            <span className="brand-tag">Smart Waste &amp; Closed-Loop Collection</span>
           </div>
         </Link>
 
-        {/* Navigation Links */}
-        <div className={`nav-links ${menuOpen ? 'is-active' : ''}`}>
-          <NavLink to="/" end className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} onClick={() => setMenuOpen(false)}>
-            Overview
-          </NavLink>
-          <NavLink to="/about" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} onClick={() => setMenuOpen(false)}>
-            Architecture
-          </NavLink>
-
-          {user?.role === 'citizen' && (
-            <>
-              <NavLink to="/report" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} onClick={() => setMenuOpen(false)}>
-                Report Overflow
-              </NavLink>
-              <NavLink to="/my-complaints" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} onClick={() => setMenuOpen(false)}>
-                Track Reports
-              </NavLink>
-            </>
-          )}
-
-          {user?.role === 'authority' && (
-            <NavLink to="/dashboard" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} onClick={() => setMenuOpen(false)}>
-              Command Center
-            </NavLink>
-          )}
-
-          {user?.role === 'collector' && (
-            <NavLink to="/tasks" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} onClick={() => setMenuOpen(false)}>
-              Collection Route
-            </NavLink>
-          )}
+        {/* 1-Click Persona Switcher */}
+        <div className="role-switcher-bar" title="Quick Role Switcher for Testing">
+          <button
+            type="button"
+            className={`role-pill ${user?.role === 'citizen' ? 'active' : ''}`}
+            onClick={() => switchPersona('citizen@demo.com')}
+          >
+            👤 Citizen
+          </button>
+          <button
+            type="button"
+            className={`role-pill ${user?.role === 'authority' ? 'active' : ''}`}
+            onClick={() => switchPersona('authority@demo.com')}
+          >
+            🏛️ Corporation Admin
+          </button>
+          <button
+            type="button"
+            className={`role-pill ${user?.role === 'collector' ? 'active' : ''}`}
+            onClick={() => switchPersona('collector@demo.com')}
+          >
+            🚛 Driver
+          </button>
         </div>
 
-        {/* Action Controls */}
-        <div className="nav-actions">
-          {/* Quick Demo Persona Switcher */}
-          <div style={{ position: 'relative' }}>
-            <button
-              type="button"
-              onClick={() => setPersonaOpen(!personaOpen)}
-              className="btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '0.82rem', borderRadius: 'var(--radius-full)' }}
-              title="Switch demo persona instantly"
-            >
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-cyan)' }}></span>
-              Persona: <strong>{user ? user.role : 'Guest'}</strong> ▾
-            </button>
+        {/* Navigation items */}
+        <nav className="nav-links">
+          <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            Home
+          </NavLink>
+          <NavLink to="/report" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            Report Waste
+          </NavLink>
+          <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            Corporation Hub
+          </NavLink>
+          <NavLink to="/tasks" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            Daily Tasks
+          </NavLink>
 
-            {personaOpen && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '44px',
-                  right: 0,
-                  width: '240px',
-                  background: '#0e1524',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: 'var(--radius-md)',
-                  boxShadow: 'var(--shadow-md)',
-                  padding: '8px',
-                  zIndex: 1100
-                }}
-              >
-                <div style={{ padding: '6px 10px', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700' }}>
-                  1-Click Role Switch
-                </div>
-                <button
-                  type="button"
-                  onClick={() => switchPersona('citizen@demo.com')}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    textAlign: 'left',
-                    borderRadius: '6px',
-                    color: 'var(--text-main)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    fontSize: '0.85rem'
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
-                >
-                  <span>👤 Priya (Citizen)</span>
-                  <span className="role-badge citizen">Citizen</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => switchPersona('authority@demo.com')}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    textAlign: 'left',
-                    borderRadius: '6px',
-                    color: 'var(--text-main)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    fontSize: '0.85rem'
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
-                >
-                  <span>🏛️ Officer Karthik</span>
-                  <span className="role-badge authority">Admin</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => switchPersona('collector@demo.com')}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    textAlign: 'left',
-                    borderRadius: '6px',
-                    color: 'var(--text-main)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    fontSize: '0.85rem'
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
-                >
-                  <span>🚛 Murugan (Driver)</span>
-                  <span className="role-badge collector">Driver</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Notifications Center */}
+          {/* Notification Button */}
           {user && (
             <div style={{ position: 'relative' }}>
               <button
                 type="button"
-                className="notif-bell-btn"
+                className="btn-secondary btn-sm"
                 onClick={() => {
                   setNotifOpen(!notifOpen);
                   if (!notifOpen && unreadCount > 0) handleMarkAsRead();
                 }}
+                style={{ position: 'relative', padding: '7px 12px' }}
                 aria-label="Notifications"
               >
-                <span>🔔</span>
-                {unreadCount > 0 && <span className="notif-count-badge">{unreadCount}</span>}
+                🔔
+                {unreadCount > 0 && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '-4px',
+                      right: '-4px',
+                      background: 'var(--rose-500)',
+                      color: '#fff',
+                      fontSize: '10px',
+                      fontWeight: '800',
+                      borderRadius: '50%',
+                      width: '18px',
+                      height: '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {unreadCount}
+                  </span>
+                )}
               </button>
 
               {notifOpen && (
-                <div className="notif-dropdown">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <h4 style={{ fontSize: '0.9rem', color: '#fff' }}>Telemetry &amp; Alerts</h4>
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '44px',
+                    right: 0,
+                    width: '320px',
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-hover)',
+                    zIndex: 1000,
+                    padding: '14px'
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '10px',
+                      borderBottom: '1px solid var(--border-subtle)',
+                      paddingBottom: '8px'
+                    }}
+                  >
+                    <strong style={{ fontSize: '0.9rem', color: '#fff' }}>Notifications</strong>
                     {unreadCount > 0 && (
-                      <button type="button" onClick={handleMarkAsRead} style={{ fontSize: '0.75rem', color: 'var(--accent-cyan)' }}>
-                        Mark read
+                      <button
+                        type="button"
+                        onClick={handleMarkAsRead}
+                        style={{ fontSize: '0.75rem', color: 'var(--cyan-500)' }}
+                      >
+                        Mark all read
                       </button>
                     )}
                   </div>
-                  {notifications.length === 0 ? (
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', padding: '10px 0' }}>All clear, no active alerts</p>
-                  ) : (
-                    notifications.slice(0, 6).map((n) => (
-                      <div key={n._id} className={`notif-item ${n.read ? 'read' : ''}`}>
-                        <div style={{ fontWeight: '600', fontSize: '0.82rem', color: '#fff', marginBottom: '2px' }}>{n.title}</div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>{n.message}</div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                          {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
+                    {notifications.length === 0 ? (
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '16px 0' }}>
+                        No notifications
+                      </p>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n._id}
+                          style={{
+                            padding: '8px',
+                            borderRadius: 'var(--radius-sm)',
+                            background: n.read ? 'transparent' : 'rgba(16, 185, 129, 0.08)',
+                            marginBottom: '6px',
+                            fontSize: '0.8rem',
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.04)'
+                          }}
+                        >
+                          <div style={{ fontWeight: '600', color: '#fff', marginBottom: '2px' }}>{n.title || 'Alert'}</div>
+                          <div style={{ color: 'var(--text-secondary)' }}>{n.message}</div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '4px' }}>
+                            {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  )}
+                      ))
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -255,232 +258,135 @@ export const Navbar = () => {
           {user ? (
             <button
               type="button"
-              className="btn-secondary"
-              onClick={() => {
-                logout();
-                navigate('/');
-              }}
-              style={{ padding: '8px 14px', fontSize: '0.85rem' }}
+              className="btn-secondary btn-sm"
+              onClick={logout}
+              style={{ color: 'var(--text-muted)' }}
             >
               Sign Out
             </button>
           ) : (
-            <Link to="/login" className="btn-primary" style={{ padding: '8px 18px', fontSize: '0.88rem' }}>
-              Launch OS
+            <Link to="/login" className="btn-primary btn-sm">
+              Sign In
             </Link>
           )}
-        </div>
-      </nav>
+        </nav>
+      </div>
     </header>
   );
 };
 
-/* ==========================================================================
-   FOOTER COMPONENT
-   ========================================================================== */
-export const Footer = () => {
-  const { isDemoMode, resetData } = useAuth();
-  return (
-    <footer className="footer-wrapper">
-      <div className="container footer-content">
-        <div style={{ maxWidth: '420px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <span style={{ fontSize: '20px' }}>🗑️</span>
-            <strong style={{ color: '#fff', fontSize: '1rem', fontFamily: 'var(--font-heading)' }}>
-              SmartBin Command System
-            </strong>
-          </div>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)', marginBottom: '10px' }}>
-            Greater Chennai Corporation (GCC) Autonomous Waste Telemetry &amp; Field Routing Platform.
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '3px 10px',
-                borderRadius: 'var(--radius-full)',
-                background: isDemoMode ? 'rgba(16, 185, 129, 0.15)' : 'rgba(6, 182, 212, 0.15)',
-                color: isDemoMode ? 'var(--accent-emerald)' : 'var(--accent-cyan)',
-                border: `1px solid ${isDemoMode ? 'rgba(16, 185, 129, 0.3)' : 'rgba(6, 182, 212, 0.3)'}`,
-                fontSize: '0.75rem',
-                fontWeight: '600'
-              }}
-            >
-              <span className={`radar-pulse ${isDemoMode ? 'green' : 'cyan'}`}></span>
-              {isDemoMode ? 'Live Interactive Mode (Client DB)' : 'Connected to GCC API Node'}
-            </span>
-            {isDemoMode && (
-              <button
-                type="button"
-                onClick={resetData}
-                style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: '16px',
-                  padding: '3px 10px',
-                  fontSize: '0.75rem',
-                  color: 'var(--text-dim)',
-                  cursor: 'pointer'
-                }}
-                title="Restore all 12 smart bins and 18 demo incidents"
-              >
-                🔄 Reset Demo Data
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'right' }}>
-          <div>MERN Stack College Full Stack Development Project</div>
-          <div style={{ marginTop: '4px' }}>
-            Demo Passwords: <code style={{ color: 'var(--accent-cyan)' }}>Demo@123</code>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-};
-
-/* ==========================================================================
-   CITY GIS MAP COMPONENT (DARK TILES + RADAR CIRCLES)
-   ========================================================================== */
-const MapFlyTo = ({ center, zoom }) => {
-  const map = useMap();
-  useEffect(() => {
-    if (center && center[0] && center[1]) {
-      map.flyTo(center, zoom || 14, { animate: true, duration: 1.2 });
-    }
-  }, [center, zoom, map]);
-  return null;
-};
-
-export const CityMap = ({ bins = [], complaints = [], selectedItem = null, onSelectBin, height = '100%' }) => {
+/* =====================================================
+   LIVE CHENNAI CITY MAP COMPONENT
+   ===================================================== */
+export const CityMap = ({
+  complaints = [],
+  bins = [],
+  selectedItem = null,
+  onSelectItem = null,
+  height = '500px'
+}) => {
   // Center of Chennai
-  const defaultCenter = [13.0418, 80.2450];
-  const activeCenter = selectedItem?.location?.coordinates
-    ? [selectedItem.location.coordinates[1], selectedItem.location.coordinates[0]]
-    : defaultCenter;
-
-  const getMarkerColor = (fill) => {
-    if (fill >= 80) return '#F43F5E'; // Red/Rose
-    if (fill >= 50) return '#F59E0B'; // Amber
-    return '#10B981'; // Emerald
-  };
+  const chennaiCenter = [13.05, 80.245];
 
   return (
-    <div style={{ width: '100%', height, position: 'relative' }}>
-      <MapContainer
-        center={defaultCenter}
-        zoom={12}
-        style={{ width: '100%', height: '100%', background: '#070b13' }}
-        zoomControl={false}
-      >
-        {/* Dark Map Tiles */}
+    <div style={{ width: '100%', height, borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
+      <MapContainer center={chennaiCenter} zoom={12} scrollWheelZoom={false} style={{ width: '100%', height: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
 
-        <MapFlyTo center={activeCenter} zoom={selectedItem ? 15 : 12} />
-
-        {/* Smart Bin Circle Markers */}
+        {/* Smart Municipal Bins */}
         {bins.map((bin) => {
           if (!bin.location?.coordinates) return null;
-          const [lng, lat] = bin.location.coordinates;
-          const isSelected = selectedItem?._id === bin._id;
-          const color = getMarkerColor(bin.fillLevel);
+          const [lon, lat] = bin.location.coordinates;
           const isCritical = bin.fillLevel >= 80;
+          const color = isCritical ? '#ef4444' : bin.fillLevel >= 50 ? '#f59e0b' : '#10b981';
 
           return (
-            <React.Fragment key={bin._id}>
-              {/* Outer pulsing ring for critical bins */}
-              {isCritical && (
-                <CircleMarker
-                  center={[lat, lng]}
-                  radius={20}
-                  pathOptions={{
-                    color: '#F43F5E',
-                    fillColor: '#F43F5E',
-                    fillOpacity: 0.15,
-                    weight: 1
-                  }}
-                />
-              )}
-
-              <CircleMarker
-                center={[lat, lng]}
-                radius={isSelected ? 13 : isCritical ? 10 : 8}
-                pathOptions={{
-                  color: isSelected ? '#ffffff' : color,
-                  fillColor: color,
-                  fillOpacity: 0.9,
-                  weight: isSelected ? 3 : 2
-                }}
-                eventHandlers={{
-                  click: () => onSelectBin && onSelectBin(bin)
-                }}
-              >
-                <Popup>
-                  <div style={{ padding: '6px', minWidth: '180px', color: '#1e293b' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                      <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{bin.code}</strong>
-                      <span
-                        style={{
-                          fontSize: '0.72rem',
-                          fontWeight: '800',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          background: color,
-                          color: '#fff'
-                        }}
-                      >
-                        {bin.fillLevel}% FILL
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: '#475569', marginBottom: '8px' }}>
-                      {bin.address} ({bin.area})
-                    </div>
-                    <div className="fill-meter-container" style={{ height: '6px', background: '#e2e8f0', marginBottom: '8px' }}>
-                      <div className="fill-meter-fill" style={{ width: `${bin.fillLevel}%`, background: color }}></div>
-                    </div>
-                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                      Last Cleared: {bin.lastCollectedAt ? new Date(bin.lastCollectedAt).toLocaleDateString() : 'Active'}
-                    </div>
+            <CircleMarker
+              key={bin._id}
+              center={[lat, lon]}
+              radius={isCritical ? 11 : 8}
+              pathOptions={{
+                color: '#fff',
+                weight: 1.5,
+                fillColor: color,
+                fillOpacity: 0.85
+              }}
+              eventHandlers={{
+                click: () => onSelectItem && onSelectItem({ type: 'bin', data: bin })
+              }}
+            >
+              <Popup>
+                <div style={{ padding: '6px', minWidth: '180px' }}>
+                  <div style={{ fontWeight: '700', fontSize: '0.9rem', color: '#111827', marginBottom: '2px' }}>
+                    🏢 Smart Bin: {bin.code}
                   </div>
-                </Popup>
-              </CircleMarker>
-            </React.Fragment>
+                  <div style={{ fontSize: '0.8rem', color: '#4b5563', marginBottom: '6px' }}>{bin.address}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: '700', color }}>{bin.fillLevel}% Full</span>
+                    {isCritical && <span style={{ fontSize: '0.7rem', color: '#dc2626', fontWeight: '700' }}>OVERFLOW ALERT</span>}
+                  </div>
+                </div>
+              </Popup>
+            </CircleMarker>
           );
         })}
 
-        {/* Citizen Reported Overflow Pins */}
+        {/* Reported Waste Incidents */}
         {complaints.map((cmp) => {
-          if (!cmp.location?.coordinates || cmp.status === 'Collected') return null;
-          const [lng, lat] = cmp.location.coordinates;
-          const isSelected = selectedItem?._id === cmp._id;
+          if (!cmp.location?.coordinates || cmp.status === 'Merged') return null;
+          const [lon, lat] = cmp.location.coordinates;
+          const isCollected = cmp.status === 'Collected';
+          const isCritical = cmp.riskLevel === 'critical' || cmp.priority === 'critical';
+          const pinColor = isCollected ? '#10b981' : isCritical ? '#dc2626' : '#f59e0b';
 
           return (
             <CircleMarker
               key={cmp._id}
-              center={[lat, lng]}
-              radius={isSelected ? 11 : 7}
+              center={[lat, lon]}
+              radius={isCritical ? 14 : 10}
               pathOptions={{
-                color: '#fff',
-                fillColor: '#06B6D4',
-                fillOpacity: 0.85,
-                weight: 2
+                color: isCritical ? '#fee2e2' : '#fff',
+                weight: 2,
+                fillColor: pinColor,
+                fillOpacity: 0.95
               }}
               eventHandlers={{
-                click: () => onSelectBin && onSelectBin(cmp)
+                click: () => onSelectItem && onSelectItem({ type: 'complaint', data: cmp })
               }}
             >
               <Popup>
-                <div style={{ padding: '6px', color: '#1e293b' }}>
-                  <div style={{ fontWeight: '700', fontSize: '0.85rem', color: '#0891b2' }}>🚨 Citizen Incident</div>
-                  <div style={{ fontSize: '0.8rem', margin: '4px 0' }}>"{cmp.description}"</div>
-                  <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Status: {cmp.status}</div>
+                <div style={{ padding: '6px', maxWidth: '240px' }}>
+                  {cmp.photo && (
+                    <img
+                      src={cmp.photo}
+                      alt="Reported waste spot"
+                      style={{ width: '100%', height: '110px', objectFit: 'cover', borderRadius: '4px', marginBottom: '8px' }}
+                    />
+                  )}
+                  <div style={{ fontWeight: '700', fontSize: '0.88rem', color: '#111827', marginBottom: '4px' }}>
+                    📍 {cmp.areaName || cmp.bin?.area || 'Reported Incident'}
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: '#4b5563', marginBottom: '6px', lineHeight: '1.4' }}>
+                    {cmp.description}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: '700',
+                        color: pinColor,
+                        padding: '2px 6px',
+                        background: '#f3f4f6',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      Risk: {(cmp.riskLevel || 'medium').toUpperCase()}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#374151' }}>{cmp.status}</span>
+                  </div>
                 </div>
               </Popup>
             </CircleMarker>
@@ -491,207 +397,187 @@ export const CityMap = ({ bins = [], complaints = [], selectedItem = null, onSel
   );
 };
 
-/* ==========================================================================
-   MAP PICKER COMPONENT (FOR CITIZEN PIN DROPS)
-   ========================================================================== */
-const MapClickDetector = ({ onPick }) => {
-  useMapEvents({
-    click(e) {
-      onPick(e.latlng.lat, e.latlng.lng);
-    }
-  });
-  return null;
-};
+/* =====================================================
+   MAP PICKER COMPONENT (FOR CITIZEN GEO-TAGGING)
+   ===================================================== */
+export const MapPicker = ({ lat, lng, onChange }) => {
+  const LocationMarker = () => {
+    useMapEvents({
+      click(e) {
+        onChange(e.latlng.lat, e.latlng.lng);
+      }
+    });
 
-export const MapPicker = ({ lat, lng, onLocationChange }) => {
-  const [pos, setPos] = useState([lat || 13.0827, lng || 80.2707]);
-  const [locating, setLocating] = useState(false);
-
-  const handlePick = (newLat, newLng) => {
-    setPos([newLat, newLng]);
-    onLocationChange(newLat, newLng);
-  };
-
-  const handleUseGPS = () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation not supported by your browser');
-      return;
-    }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        handlePick(latitude, longitude);
-        setLocating(false);
-      },
-      (err) => {
-        console.warn('GPS error, using fallback:', err.message);
-        setLocating(false);
-        alert('Could not retrieve GPS coordinates. Please click on the map to pin.');
-      },
-      { timeout: 8000 }
+    return (
+      <CircleMarker
+        center={[lat, lng]}
+        radius={12}
+        pathOptions={{ color: '#fff', weight: 2, fillColor: '#10b981', fillOpacity: 0.9 }}
+      >
+        <Popup>
+          <div style={{ fontSize: '0.82rem', color: '#111' }}>
+            <strong>Selected Incident Location</strong>
+            <br />
+            Lat: {lat.toFixed(4)}, Lng: {lng.toFixed(4)}
+          </div>
+        </Popup>
+      </CircleMarker>
     );
   };
 
   return (
-    <div style={{ marginTop: '10px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-        <span style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>
-          Click anywhere on the map or use GPS to pin location:
-        </span>
-        <button
-          type="button"
-          onClick={handleUseGPS}
-          disabled={locating}
-          className="btn-secondary"
-          style={{ padding: '4px 10px', fontSize: '0.78rem' }}
-        >
-          {locating ? '📡 Locating...' : '📍 Auto-Detect GPS'}
-        </button>
-      </div>
-
-      <div style={{ height: '240px', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
-        <MapContainer center={pos} zoom={13} style={{ width: '100%', height: '100%' }} zoomControl={false}>
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
-          <MapClickDetector onPick={handlePick} />
-          <CircleMarker center={pos} radius={10} pathOptions={{ color: '#fff', fillColor: '#06B6D4', fillOpacity: 0.9, weight: 2 }} />
-        </MapContainer>
-      </div>
-      <div style={{ marginTop: '6px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-        Selected GPS: <code style={{ color: 'var(--accent-cyan)' }}>{pos[0].toFixed(5)}, {pos[1].toFixed(5)}</code>
-      </div>
+    <div style={{ width: '100%', height: '240px', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
+      <MapContainer center={[lat, lng]} zoom={13} scrollWheelZoom={false} style={{ width: '100%', height: '100%' }}>
+        <TileLayer
+          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        />
+        <LocationMarker />
+      </MapContainer>
     </div>
   );
 };
 
-/* ==========================================================================
-   PHOTO UPLOAD COMPONENT (COMPRESSION IN BROWSER)
-   ========================================================================== */
-export const PhotoUpload = ({ onPhotoSelected }) => {
-  const [preview, setPreview] = useState(null);
-  const [compressing, setCompressing] = useState(false);
-  const [sizeInfo, setSizeInfo] = useState('');
-  const fileInputRef = useRef(null);
+/* =====================================================
+   PHOTO UPLOAD WITH INSTANT AI ANALYSIS PREVIEW
+   ===================================================== */
+export const PhotoUpload = ({ photo, setPhoto, analysis, setAnalysis }) => {
+  const [selectedDemo, setSelectedDemo] = useState('bin_overflow');
 
-  const compressImage = (file) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let { width, height } = img;
-          const maxDim = 1000;
-          if (width > maxDim || height > maxDim) {
-            if (width > height) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            } else {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          canvas.toBlob(
-            (blob) => {
-              const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.webp', {
-                type: 'image/webp'
-              });
-              resolve(compressedFile);
-            },
-            'image/webp',
-            0.75
-          );
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
+  const handleDemoSelect = (key) => {
+    setSelectedDemo(key);
+    setPhoto(samplePhotos[key]);
+
+    if (key === 'drain_block') {
+      setAnalysis({
+        category: 'Plastic Storm Drain Blockage',
+        estimatedWeight: '60 kg',
+        spillRadius: '3.5 meters',
+        drainageThreat: 'CRITICAL (Immediate Monsoon Flood Threat)',
+        suggestedRisk: 'critical'
+      });
+    } else if (key === 'commercial') {
+      setAnalysis({
+        category: 'Market Vegetable Crates & Sacks',
+        estimatedWeight: '120 kg',
+        spillRadius: '6 meters',
+        drainageThreat: 'Moderate',
+        suggestedRisk: 'high'
+      });
+    } else if (key === 'footpath') {
+      setAnalysis({
+        category: 'Pedestrian Walkway Waste Heap',
+        estimatedWeight: '50 kg',
+        spillRadius: '2.5 meters',
+        drainageThreat: 'High Public Hygiene Hazard',
+        suggestedRisk: 'high'
+      });
+    } else {
+      setAnalysis({
+        category: 'Municipal Smart Bin Overflow',
+        estimatedWeight: '80-100 kg',
+        spillRadius: '4 meters',
+        drainageThreat: 'Moderate Hazard',
+        suggestedRisk: 'high'
+      });
+    }
   };
 
-  const handleFileChange = async (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-
-    setCompressing(true);
-    try {
-      const originalKB = Math.round(file.size / 1024);
-      const compressed = await compressImage(file);
-      const compressedKB = Math.round(compressed.size / 1024);
-
-      setSizeInfo(`${originalKB} KB → ${compressedKB} KB (-${Math.round((1 - compressedKB / originalKB) * 100)}%)`);
-      setPreview(URL.createObjectURL(compressed));
-      onPhotoSelected(compressed);
-    } catch (err) {
-      console.error('Compression error:', err);
-      onPhotoSelected(file);
-    } finally {
-      setCompressing(false);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPhoto(reader.result);
+        setAnalysis({
+          category: 'Citizen Live Camera Capture',
+          estimatedWeight: '~65 kg estimated',
+          spillRadius: '3.0 meters',
+          drainageThreat: 'Potential Obstruction',
+          suggestedRisk: 'high'
+        });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   return (
     <div>
-      <input
-        type="file"
-        accept="image/*"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        style={{ display: 'none' }}
-      />
-      {!preview ? (
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          style={{
-            border: '2px dashed var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            padding: '28px',
-            textAlign: 'center',
-            cursor: 'pointer',
-            background: 'rgba(255,255,255,0.02)',
-            transition: 'var(--transition-fast)'
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--accent-cyan)')}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
+      <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+        📸 Incident Photograph (Live Capture / Upload)
+      </label>
+
+      {/* Preset demo photo selector for quick evaluation */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
+        <button
+          type="button"
+          className={`btn-secondary btn-sm ${selectedDemo === 'bin_overflow' ? 'active' : ''}`}
+          onClick={() => handleDemoSelect('bin_overflow')}
         >
-          <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>📷</span>
-          <div style={{ fontWeight: '600', color: '#fff' }}>
-            {compressing ? 'Optimizing photo...' : 'Click or Tap to Upload Photo'}
-          </div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-            In-browser WebP compression (&lt; 150 KB)
-          </div>
+          🗑️ Overflowing Bin
+        </button>
+        <button
+          type="button"
+          className={`btn-secondary btn-sm ${selectedDemo === 'drain_block' ? 'active' : ''}`}
+          onClick={() => handleDemoSelect('drain_block')}
+        >
+          🌊 Clogged Storm Drain
+        </button>
+        <button
+          type="button"
+          className={`btn-secondary btn-sm ${selectedDemo === 'commercial' ? 'active' : ''}`}
+          onClick={() => handleDemoSelect('commercial')}
+        >
+          📦 Market Crates
+        </button>
+        <button
+          type="button"
+          className={`btn-secondary btn-sm ${selectedDemo === 'footpath' ? 'active' : ''}`}
+          onClick={() => handleDemoSelect('footpath')}
+        >
+          🚶 Walkway Heap
+        </button>
+      </div>
+
+      {/* Photo Frame */}
+      <div className="waste-photo-frame" style={{ height: '240px', marginBottom: '12px' }}>
+        <img src={photo || samplePhotos.bin_overflow} alt="Incident capture" />
+        <div className="photo-badge-overlay">
+          <span className="badge badge-medium">📷 Visual Proof</span>
         </div>
-      ) : (
-        <div style={{ position: 'relative', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
-          <img src={preview} alt="Bin overflow preview" style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              padding: '8px 12px',
-              background: 'rgba(0,0,0,0.7)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}
-          >
-            <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)' }}>⚡ {sizeInfo}</span>
-            <button
-              type="button"
-              onClick={() => {
-                setPreview(null);
-                onPhotoSelected(null);
-              }}
-              style={{ color: 'var(--accent-rose)', fontSize: '0.8rem', fontWeight: '600' }}
-            >
-              ✕ Remove
-            </button>
+      </div>
+
+      {/* File Upload Input */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <label className="btn-secondary btn-sm" style={{ cursor: 'pointer' }}>
+          📁 Upload From Device
+          <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+        </label>
+        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          JPG, PNG or live smartphone photo
+        </span>
+      </div>
+
+      {/* Instant AI Waste Analysis Result */}
+      {analysis && (
+        <div className="ai-analysis-box">
+          <div className="ai-analysis-header">
+            <span className="ai-analysis-title">✨ Automated Waste Visual Analysis</span>
+            <RiskBadge level={analysis.suggestedRisk || 'high'} />
+          </div>
+          <div className="ai-metric-grid">
+            <div className="ai-metric-item">
+              Detected Waste: <strong>{analysis.category}</strong>
+            </div>
+            <div className="ai-metric-item">
+              Estimated Weight: <strong>{analysis.estimatedWeight}</strong>
+            </div>
+            <div className="ai-metric-item">
+              Spill Spread: <strong>{analysis.spillRadius}</strong>
+            </div>
+            <div className="ai-metric-item">
+              Drainage Threat: <strong>{analysis.drainageThreat}</strong>
+            </div>
           </div>
         </div>
       )}
@@ -699,34 +585,34 @@ export const PhotoUpload = ({ onPhotoSelected }) => {
   );
 };
 
-/* ==========================================================================
-   PREDICTIVE OVERFLOW GAUGE
-   ========================================================================== */
-export const PredictiveGauge = ({ fillLevel = 50 }) => {
-  // Compute estimated time to overflow assuming ~2.2% fill per hour
-  const remaining = Math.max(0, 100 - fillLevel);
-  const minutesLeft = Math.round((remaining / 2.2) * 60);
-  const hoursLeft = (minutesLeft / 60).toFixed(1);
-
+/* =====================================================
+   FOOTER
+   ===================================================== */
+export const Footer = () => {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '3px' }}>
-          <span style={{ color: 'var(--text-muted)' }}>Overflow Forecast</span>
-          <span style={{ fontWeight: '700', color: fillLevel >= 80 ? 'var(--accent-rose)' : 'var(--accent-cyan)' }}>
-            {fillLevel >= 95 ? 'CRITICAL SPILL' : `~${hoursLeft}h (${minutesLeft}m)`}
-          </span>
+    <footer className="footer">
+      <div className="container footer-content">
+        <div>
+          <strong>CleanChennai</strong> · Smart Waste Bin Monitoring &amp; Closed-Loop Collection System
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '2px' }}>
+            College Full Stack Development Project · Greater Chennai Corporation Simulation
+          </div>
         </div>
-        <div className="fill-meter-container" style={{ height: '4px' }}>
-          <div
-            className="fill-meter-fill"
-            style={{
-              width: `${fillLevel}%`,
-              background: fillLevel >= 80 ? 'var(--accent-rose)' : fillLevel >= 50 ? 'var(--accent-amber)' : 'var(--accent-emerald)'
+        <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+          <button
+            type="button"
+            className="btn-secondary btn-sm"
+            onClick={() => {
+              if (window.confirm('Reset local demo database to initial state?')) {
+                localStorage.removeItem('clean_chennai_waste_v3');
+                window.location.reload();
+              }
             }}
-          ></div>
+          >
+            🔄 Reset Demo Data
+          </button>
         </div>
       </div>
-    </div>
+    </footer>
   );
 };

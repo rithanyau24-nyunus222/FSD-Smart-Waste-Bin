@@ -52,10 +52,14 @@ const ComplaintSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Pending', 'Verified', 'Assigned', 'In Progress', 'Collected', 'Rejected'],
+      enum: ['Pending', 'Verified', 'Assigned', 'In Progress', 'Collected', 'Rejected', 'Merged'],
       default: 'Pending'
     },
+    riskLevel: { type: String, enum: ['low', 'medium', 'high', 'critical'], default: 'medium' },
+    areaName: { type: String, default: '' },
+    photoProof: { type: String, default: '' },
     rejectReason: { type: String, default: '' },
+    duplicateCount: { type: Number, default: 0 },
     history: [HistoryItemSchema]
   },
   { timestamps: true }
@@ -73,7 +77,12 @@ const TaskSchema = new mongoose.Schema(
       enum: ['assigned', 'in_progress', 'collected'],
       default: 'assigned'
     },
+    stopNumber: { type: Number, default: 1 },
+    notes: { type: String, default: '' },
+    proofNote: { type: String, default: '' },
+    proofPhoto: { type: String, default: '' },
     assignedAt: { type: Date, default: Date.now },
+    startedAt: { type: Date, default: null },
     completedAt: { type: Date, default: null }
   },
   { timestamps: true }

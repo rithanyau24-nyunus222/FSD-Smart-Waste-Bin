@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch, useAuth } from '../api.jsx';
+import { RiskBadge, StatusBadge } from '../components.jsx';
+import { samplePhotos } from '../mockData.js';
 
 export const Tasks = () => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [resolvingTask, setResolvingTask] = useState(null);
-  const [proofNote, setProofNote] = useState('');
+  const [proofNote, setProofNote] = useState('Area cleared, pavement swept, lime powder disinfectant sprayed.');
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchTasks = async () => {
@@ -40,165 +42,151 @@ export const Tasks = () => {
     }
   };
 
-  const handleCompleteTask = async () => {
+  // Closed Verification Loop execution
+  const handleCompleteCollection = async () => {
     if (!resolvingTask) return;
     try {
       setActionLoading(true);
       await apiFetch(`/tasks/${resolvingTask._id}/status`, {
         method: 'PATCH',
-        body: { status: 'collected' }
+        body: {
+          status: 'collected',
+          proofNote,
+          proofPhoto: samplePhotos.cleaned_proof
+        }
       });
+      alert('Closed-Loop Verification Complete! The incident has been recorded as resolved, the bin fill level reset to 5%, and the reporting citizen has been notified.');
       setResolvingTask(null);
-      setProofNote('');
       fetchTasks();
     } catch (err) {
-      alert('Could not complete collection: ' + err.message);
+      alert('Failed to complete collection: ' + err.message);
     } finally {
       setActionLoading(false);
     }
   };
 
-  // Launch Google Maps navigation
   const openNavigation = (coords) => {
     if (!coords || coords.length < 2) return;
     const [lng, lat] = coords;
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
   };
 
-  const activeTasks = tasks.filter((t) => t.status !== 'collected');
+  const pendingTasks = tasks.filter((t) => t.status !== 'collected');
   const completedTasks = tasks.filter((t) => t.status === 'collected');
 
   return (
-    <div className="driver-hud-container">
-      {/* Driver Cockpit Header */}
-      <div className="glass-card" style={{ marginBottom: '24px', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(15, 23, 42, 0.8))' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--accent-amber)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Sanitation Driver Cockpit
-            </span>
-            <h1 style={{ fontSize: '1.6rem', color: '#fff', fontFamily: 'var(--font-heading)', marginTop: '2px' }}>
-              {user ? user.name : 'Murugan (Collector 1)'}
-            </h1>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
-              Assigned Zone: <strong>Adyar &amp; T. Nagar Sector</strong>
-            </div>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '2rem', fontWeight: '800', fontFamily: 'var(--font-heading)', color: 'var(--accent-cyan)' }}>
-              {activeTasks.length}
-            </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-              Pending Stops
-            </div>
-          </div>
+    <div className="container" style={{ maxWidth: '900px', padding: '40px 20px 80px 20px' }}>
+      <div style={{ marginBottom: '28px' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 12px', borderRadius: 'var(--radius-full)', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--blue-500)', fontSize: '0.78rem', fontWeight: '700', marginBottom: '8px' }}>
+          🚛 SANITATION DRIVER FIELD COCKPIT
         </div>
+        <h1 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-heading)', color: '#fff' }}>
+          Today's Daily Collection Tasks
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          Assigned to: <strong>{user?.name || 'Sanitation Driver'}</strong> ({user?.area || 'Chennai Zone'})
+        </p>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
-          Optimizing route stops...
+        <div className="card" style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+          Loading daily tasks from Chennai dispatch...
         </div>
       ) : (
         <>
-          {/* Active Collection Route Stops */}
-          <div style={{ marginBottom: '32px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '1.1rem', color: '#fff' }}>
-                🚀 Priority Route Sequence
-              </h3>
-              <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '600' }}>
-                ● Shortest Path (TSP) Active
+          {/* Active Tasks Queue */}
+          <div style={{ marginBottom: '40px' }}>
+            <h2 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>⚡ Active Stops</span>
+              <span style={{ fontSize: '0.8rem', background: 'rgba(255, 255, 255, 0.1)', padding: '2px 8px', borderRadius: 'var(--radius-full)' }}>
+                {pendingTasks.length} pending
               </span>
-            </div>
+            </h2>
 
-            {activeTasks.length === 0 ? (
-              <div className="glass-card" style={{ textAlign: 'center', padding: '40px 20px' }}>
+            {pendingTasks.length === 0 ? (
+              <div className="card" style={{ textAlign: 'center', padding: '50px 20px' }}>
                 <span style={{ fontSize: '36px', display: 'block', marginBottom: '10px' }}>🎉</span>
-                <h4 style={{ color: '#fff', marginBottom: '4px' }}>All Assigned Bins Cleared!</h4>
-                <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>
-                  Great job. No pending collection requests currently in your zone queue.
+                <h3 style={{ color: '#fff', marginBottom: '6px' }}>All Daily Tasks Completed!</h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
+                  Great job! You have cleared all assigned stops for this shift.
                 </p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {activeTasks.map((t, index) => {
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                {pendingTasks.map((t, idx) => {
                   const cmp = t.complaint;
-                  const bin = cmp?.bin;
-                  const coords = cmp?.location?.coordinates || bin?.location?.coordinates;
+                  const coords = cmp?.location?.coordinates;
 
                   return (
-                    <div
-                      key={t._id}
-                      className="glass-card"
-                      style={{
-                        padding: '20px',
-                        borderLeft: `4px solid ${t.status === 'in_progress' ? 'var(--accent-purple)' : 'var(--accent-cyan)'}`
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <span className="stop-sequence-badge">#{index + 1}</span>
-                          <div>
-                            <div style={{ fontWeight: '700', fontSize: '1.05rem', color: '#fff' }}>
-                              {bin?.address || 'Street Overflow Point'}
-                            </div>
-                            <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
-                              Zone: {bin?.area || 'Ward'} · Smart Bin Code: <code style={{ color: 'var(--accent-cyan)' }}>{bin?.code || 'BIN-01'}</code>
-                            </div>
-                          </div>
+                    <div key={t._id} className="card">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ background: 'var(--blue-500)', color: '#fff', fontWeight: '800', fontSize: '11px', padding: '3px 8px', borderRadius: 'var(--radius-full)' }}>
+                            STOP #{idx + 1}
+                          </span>
+                          <strong style={{ color: '#fff', fontSize: '1rem' }}>
+                            {cmp?.areaName || cmp?.bin?.area || 'Chennai Incident'}
+                          </strong>
                         </div>
-
-                        <span className={`status-chip ${t.status.replace('_', '-')}`}>
-                          {t.status === 'in_progress' ? 'En Route' : 'Assigned'}
-                        </span>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <RiskBadge level={cmp?.riskLevel || t.priority} />
+                          <StatusBadge status={t.status === 'in_progress' ? 'In Progress' : 'Assigned'} />
+                        </div>
                       </div>
 
-                      <div style={{ background: 'rgba(0,0,0,0.25)', padding: '12px 14px', borderRadius: '8px', marginBottom: '14px' }}>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontStyle: 'italic' }}>
-                          "{cmp?.description || 'Commercial waste overflowing near bin.'}"
+                      <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: '18px', marginBottom: '16px' }}>
+                        {/* Waste photo so driver recognizes it */}
+                        <div className="waste-photo-frame" style={{ height: '130px' }}>
+                          <img src={cmp?.photo || samplePhotos.bin_overflow} alt="Waste spot" />
                         </div>
-                        {bin?.fillLevel !== undefined && (
-                          <div style={{ marginTop: '8px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                            Current Bin Telemetry: <strong style={{ color: bin.fillLevel >= 80 ? 'var(--accent-rose)' : 'var(--accent-amber)' }}>{bin.fillLevel}% Full</strong>
+
+                        <div>
+                          <div style={{ fontSize: '0.85rem', color: '#fff', marginBottom: '6px', lineHeight: '1.4' }}>
+                            {cmp?.description || 'Municipal overflow reported by citizen'}
                           </div>
-                        )}
+
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                            📍 {cmp?.bin?.address || 'Near Chennai main road junction'}
+                          </div>
+
+                          {t.notes && (
+                            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', background: 'rgba(255, 255, 255, 0.04)', padding: '6px 10px', borderRadius: 'var(--radius-sm)' }}>
+                              Dispatcher Note: {t.notes}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Driver Action Buttons */}
-                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                      {/* Actions */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '14px', flexWrap: 'wrap', gap: '10px' }}>
                         <button
                           type="button"
-                          className="btn-secondary"
-                          style={{ flex: 1, padding: '10px', fontSize: '0.85rem' }}
+                          className="btn-secondary btn-sm"
                           onClick={() => openNavigation(coords)}
                         >
-                          🗺️ Navigate (Google Maps)
+                          🧭 Open Google Maps Navigation
                         </button>
 
-                        {t.status === 'assigned' && (
-                          <button
-                            type="button"
-                            className="btn-cyan"
-                            style={{ flex: 1, padding: '10px', fontSize: '0.85rem' }}
-                            disabled={actionLoading}
-                            onClick={() => handleStartTask(t._id)}
-                          >
-                            ▶ Start Collection
-                          </button>
-                        )}
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          {t.status === 'assigned' && (
+                            <button
+                              type="button"
+                              className="btn-secondary btn-sm"
+                              disabled={actionLoading}
+                              onClick={() => handleStartTask(t._id)}
+                            >
+                              ⚡ Start Collection
+                            </button>
+                          )}
 
-                        {t.status === 'in_progress' && (
                           <button
                             type="button"
-                            className="btn-primary"
-                            style={{ flex: 1, padding: '10px', fontSize: '0.85rem' }}
-                            disabled={actionLoading}
+                            className="btn-primary btn-sm"
                             onClick={() => setResolvingTask(t)}
                           >
-                            ✓ Mark Collected &amp; Reset Bin
+                            ✅ Complete &amp; Verify Collection
                           </button>
-                        )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -207,28 +195,27 @@ export const Tasks = () => {
             )}
           </div>
 
-          {/* Cleared / History Log */}
+          {/* Completed / Closed Loop History */}
           {completedTasks.length > 0 && (
             <div>
-              <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                ✓ Completed Today ({completedTasks.length})
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <h2 style={{ fontSize: '1.15rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
+                🏁 Closed-Loop Verified Today ({completedTasks.length})
+              </h2>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {completedTasks.map((t) => (
-                  <div
-                    key={t._id}
-                    className="glass-card"
-                    style={{ padding: '14px 18px', opacity: 0.75, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: '600', color: '#fff', fontSize: '0.9rem' }}>
-                        {t.complaint?.bin?.address || 'Cleared Street Location'}
+                  <div key={t._id} className="card" style={{ padding: '16px 20px', background: 'rgba(255, 255, 255, 0.02)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <strong style={{ color: '#fff', fontSize: '0.92rem' }}>
+                          ✓ {t.complaint?.areaName || t.complaint?.bin?.area || 'Cleared Spot'}
+                        </strong>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                          Closed at {new Date(t.completedAt || t.assignedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {t.proofNote || 'Waste cleared'}
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                        Resolved at {new Date(t.completedAt || Date.now()).toLocaleTimeString()} · Bin capacity reset to 5%
-                      </div>
+                      <span className="badge badge-collected">Closed-Loop Verified</span>
                     </div>
-                    <span className="status-chip collected">Collected</span>
                   </div>
                 ))}
               </div>
@@ -237,55 +224,55 @@ export const Tasks = () => {
         </>
       )}
 
-      {/* RESOLUTION PROOF MODAL */}
+      {/* CLOSED VERIFICATION LOOP MODAL */}
       {resolvingTask && (
-        <div className="modal-backdrop" onClick={() => setResolvingTask(null)}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '8px' }}>
-              Certify Bin Collection &amp; Clearance
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3 style={{ fontSize: '1.25rem', color: '#fff', marginBottom: '8px' }}>
+              🔒 Closed-Loop Verification Confirmation
             </h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '16px' }}>
-              Confirm that the bin at <strong>{resolvingTask.complaint?.bin?.address}</strong> has been emptied and swept.
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '18px' }}>
+              Confirm that the waste at <strong>{resolvingTask.complaint?.areaName || 'this location'}</strong> has been completely cleared.
             </p>
 
-            <div className="task-proof-box">
-              <span style={{ fontSize: '28px', display: 'block', marginBottom: '6px' }}>📸</span>
-              <div style={{ fontSize: '0.85rem', fontWeight: '600', color: '#fff' }}>
-                Cleaned Site Verified
-              </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Field driver signature logged automatically
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                Cleaned Spot Photographic Proof:
+              </label>
+              <div className="waste-photo-frame" style={{ height: '160px', marginBottom: '8px' }}>
+                <img src={samplePhotos.cleaned_proof} alt="Cleaned proof" />
+                <div className="photo-badge-overlay">
+                  <span className="badge badge-collected">✅ Spot Cleaned &amp; Disinfected</span>
+                </div>
               </div>
             </div>
 
-            <div style={{ marginBottom: '18px' }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                Driver Clearance Note (Optional):
+            <div style={{ marginBottom: '22px' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                Driver Verification Field Note:
               </label>
-              <input
-                type="text"
-                placeholder="e.g. Bin emptied, washed, surrounding sidewalk swept."
+              <textarea
+                rows="2"
                 value={proofNote}
                 onChange={(e) => setProofNote(e.target.value)}
-                className="form-input"
               />
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button
                 type="button"
-                className="btn-secondary"
+                className="btn-secondary btn-sm"
                 onClick={() => setResolvingTask(null)}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                className="btn-primary"
-                onClick={handleCompleteTask}
+                className="btn-primary btn-sm"
                 disabled={actionLoading}
+                onClick={handleCompleteCollection}
               >
-                {actionLoading ? 'Closing Ticket...' : 'Confirm Cleaned & Reset Bin'}
+                {actionLoading ? 'Closing Loop...' : 'Confirm & Close Loop'}
               </button>
             </div>
           </div>
