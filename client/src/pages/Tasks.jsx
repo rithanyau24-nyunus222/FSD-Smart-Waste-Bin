@@ -75,38 +75,38 @@ export const Tasks = () => {
   const completedTasks = tasks.filter((t) => t.status === 'collected');
 
   return (
-    <div className="container" style={{ maxWidth: '900px', padding: '40px 20px 80px 20px' }}>
+    <div style={{ maxWidth: '960px', margin: '0 auto' }}>
       <div style={{ marginBottom: '28px' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 12px', borderRadius: 'var(--radius-full)', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--blue-500)', fontSize: '0.78rem', fontWeight: '700', marginBottom: '8px' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 12px', borderRadius: 'var(--radius-full)', background: 'var(--primary-light)', color: 'var(--primary)', fontSize: '0.78rem', fontWeight: '700', marginBottom: '8px' }}>
           🚛 SANITATION DRIVER FIELD COCKPIT
         </div>
-        <h1 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-heading)', color: '#fff' }}>
+        <h1 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-heading)', color: 'var(--text-main)', marginBottom: '4px' }}>
           Today's Daily Collection Tasks
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-          Assigned to: <strong>{user?.name || 'Sanitation Driver'}</strong> ({user?.area || 'Chennai Zone'})
+          Assigned to: <strong>{user?.name || 'Sanitation Driver'}</strong> ({user?.area || 'Zone 13 Adyar'})
         </p>
       </div>
 
       {loading ? (
-        <div className="card" style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+        <div className="white-card" style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
           Loading daily tasks from Chennai dispatch...
         </div>
       ) : (
         <>
           {/* Active Tasks Queue */}
           <div style={{ marginBottom: '40px' }}>
-            <h2 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 style={{ fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>⚡ Active Stops</span>
-              <span style={{ fontSize: '0.8rem', background: 'rgba(255, 255, 255, 0.1)', padding: '2px 8px', borderRadius: 'var(--radius-full)' }}>
+              <span style={{ fontSize: '0.8rem', background: 'var(--primary-light)', color: 'var(--primary)', padding: '2px 10px', borderRadius: 'var(--radius-full)', fontWeight: '700' }}>
                 {pendingTasks.length} pending
               </span>
             </h2>
 
             {pendingTasks.length === 0 ? (
-              <div className="card" style={{ textAlign: 'center', padding: '50px 20px' }}>
-                <span style={{ fontSize: '36px', display: 'block', marginBottom: '10px' }}>🎉</span>
-                <h3 style={{ color: '#fff', marginBottom: '6px' }}>All Daily Tasks Completed!</h3>
+              <div className="white-card" style={{ textAlign: 'center', padding: '50px 20px' }}>
+                <span style={{ fontSize: '40px', display: 'block', marginBottom: '12px' }}>🎉</span>
+                <h3 style={{ color: 'var(--text-main)', marginBottom: '6px' }}>All Daily Tasks Completed!</h3>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
                   Great job! You have cleared all assigned stops for this shift.
                 </p>
@@ -118,13 +118,13 @@ export const Tasks = () => {
                   const coords = cmp?.location?.coordinates;
 
                   return (
-                    <div key={t._id} className="card">
+                    <div key={t._id} className="white-card" style={{ padding: '22px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ background: 'var(--blue-500)', color: '#fff', fontWeight: '800', fontSize: '11px', padding: '3px 8px', borderRadius: 'var(--radius-full)' }}>
+                          <span style={{ background: 'var(--primary)', color: '#fff', fontWeight: '800', fontSize: '11px', padding: '3px 10px', borderRadius: 'var(--radius-full)' }}>
                             STOP #{idx + 1}
                           </span>
-                          <strong style={{ color: '#fff', fontSize: '1rem' }}>
+                          <strong style={{ color: 'var(--text-main)', fontSize: '1.05rem' }}>
                             {cmp?.areaName || cmp?.bin?.area || 'Chennai Incident'}
                           </strong>
                         </div>
@@ -136,29 +136,29 @@ export const Tasks = () => {
 
                       <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: '18px', marginBottom: '16px' }}>
                         {/* Waste photo so driver recognizes it */}
-                        <div className="waste-photo-frame" style={{ height: '130px' }}>
+                        <div className="waste-photo-thumb" style={{ height: '140px' }}>
                           <img src={cmp?.photo || samplePhotos.bin_overflow} alt="Waste spot" />
                         </div>
 
                         <div>
-                          <div style={{ fontSize: '0.85rem', color: '#fff', marginBottom: '6px', lineHeight: '1.4' }}>
+                          <div style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: '600', marginBottom: '6px', lineHeight: '1.4' }}>
                             {cmp?.description || 'Municipal overflow reported by citizen'}
                           </div>
 
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                            📍 {cmp?.bin?.address || 'Near Chennai main road junction'}
+                          <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
+                            📍 {cmp?.bin?.address || cmp?.areaName || 'Near Chennai main road junction'}
                           </div>
 
                           {t.notes && (
-                            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', background: 'rgba(255, 255, 255, 0.04)', padding: '6px 10px', borderRadius: 'var(--radius-sm)' }}>
-                              Dispatcher Note: {t.notes}
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', background: '#f8fafc', border: '1px solid var(--border-light)', padding: '8px 12px', borderRadius: 'var(--radius-sm)' }}>
+                              <strong>Dispatcher Note:</strong> {t.notes}
                             </div>
                           )}
                         </div>
                       </div>
 
                       {/* Actions */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-light)', paddingTop: '14px', flexWrap: 'wrap', gap: '10px' }}>
                         <button
                           type="button"
                           className="btn-secondary btn-sm"
@@ -198,19 +198,19 @@ export const Tasks = () => {
           {/* Completed / Closed Loop History */}
           {completedTasks.length > 0 && (
             <div>
-              <h2 style={{ fontSize: '1.15rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
+              <h2 style={{ fontSize: '1.15rem', color: 'var(--text-main)', marginBottom: '14px' }}>
                 🏁 Closed-Loop Verified Today ({completedTasks.length})
               </h2>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {completedTasks.map((t) => (
-                  <div key={t._id} className="card" style={{ padding: '16px 20px', background: 'rgba(255, 255, 255, 0.02)' }}>
+                  <div key={t._id} className="white-card" style={{ padding: '16px 20px', marginBottom: '0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
-                        <strong style={{ color: '#fff', fontSize: '0.92rem' }}>
+                        <strong style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}>
                           ✓ {t.complaint?.areaName || t.complaint?.bin?.area || 'Cleared Spot'}
                         </strong>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                           Closed at {new Date(t.completedAt || t.assignedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {t.proofNote || 'Waste cleared'}
                         </div>
                       </div>
@@ -227,19 +227,19 @@ export const Tasks = () => {
       {/* CLOSED VERIFICATION LOOP MODAL */}
       {resolvingTask && (
         <div className="modal-overlay">
-          <div className="modal-content">
-            <h3 style={{ fontSize: '1.25rem', color: '#fff', marginBottom: '8px' }}>
+          <div className="modal-card">
+            <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-heading)', color: 'var(--text-main)', marginBottom: '8px' }}>
               🔒 Closed-Loop Verification Confirmation
             </h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '18px' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '18px' }}>
               Confirm that the waste at <strong>{resolvingTask.complaint?.areaName || 'this location'}</strong> has been completely cleared.
             </p>
 
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '6px' }}>
                 Cleaned Spot Photographic Proof:
               </label>
-              <div className="waste-photo-frame" style={{ height: '160px', marginBottom: '8px' }}>
+              <div className="waste-photo-thumb" style={{ height: '170px', marginBottom: '8px' }}>
                 <img src={samplePhotos.cleaned_proof} alt="Cleaned proof" />
                 <div className="photo-badge-overlay">
                   <span className="badge badge-collected">✅ Spot Cleaned &amp; Disinfected</span>
@@ -248,7 +248,7 @@ export const Tasks = () => {
             </div>
 
             <div style={{ marginBottom: '22px' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '6px' }}>
                 Driver Verification Field Note:
               </label>
               <textarea

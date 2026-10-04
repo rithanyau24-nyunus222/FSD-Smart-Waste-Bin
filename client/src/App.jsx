@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './api.jsx';
-import { Navbar, Footer, FloatingDecor } from './components.jsx';
+import { Sidebar, Header, RightPanel } from './components.jsx';
 
 import { Home, About, NotFound } from './pages/Home.jsx';
 import { Login, Register } from './pages/Auth.jsx';
@@ -16,8 +16,8 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   if (loading) {
     return (
-      <div className="container" style={{ textAlign: 'center', padding: '100px 0' }}>
-        <p>Verifying credentials...</p>
+      <div style={{ textAlign: 'center', padding: '100px 0', color: 'var(--text-muted)' }}>
+        Loading CleanChennai portal...
       </div>
     );
   }
@@ -27,7 +27,6 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    // Redirect unauthorized user to their role's natural landing page
     if (user.role === 'authority') return <Navigate to="/dashboard" replace />;
     if (user.role === 'collector') return <Navigate to="/tasks" replace />;
     return <Navigate to="/report" replace />;
@@ -38,70 +37,79 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 const App = () => {
   return (
-    <div className="app-layout">
-      <FloatingDecor />
-      <Navbar />
-      <main className="main-content">
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+    <div className="dashboard-root">
+      {/* Permanent Left Sidebar */}
+      <Sidebar />
 
-          {/* Citizen Routes */}
-          <Route
-            path="/report"
-            element={
-              <ProtectedRoute allowedRoles={['citizen']}>
-                <Report />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/my-complaints"
-            element={
-              <ProtectedRoute allowedRoles={['citizen']}>
-                <MyComplaints />
-              </ProtectedRoute>
-            }
-          />
+      {/* Main Workspace (Header + Center + Right Panel) */}
+      <div className="main-wrapper">
+        <Header />
 
-          {/* Shared / Role-Checked Detail Route */}
-          <Route
-            path="/complaints/:id"
-            element={
-              <ProtectedRoute allowedRoles={['citizen', 'authority', 'collector']}>
-                <ComplaintDetail />
-              </ProtectedRoute>
-            }
-          />
+        <div className="content-body">
+          <main className="center-content">
+            <Routes>
+              {/* Home & Overview */}
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-          {/* Authority Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute allowedRoles={['authority']}>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
+              {/* Citizen Reporting */}
+              <Route
+                path="/report"
+                element={
+                  <ProtectedRoute allowedRoles={['citizen']}>
+                    <Report />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-complaints"
+                element={
+                  <ProtectedRoute allowedRoles={['citizen']}>
+                    <MyComplaints />
+                  </ProtectedRoute>
+                }
+              />
 
-          {/* Collector Routes */}
-          <Route
-            path="/tasks"
-            element={
-              <ProtectedRoute allowedRoles={['collector', 'authority']}>
-                <Tasks />
-              </ProtectedRoute>
-            }
-          />
+              {/* Shared Complaint Detail Tracker */}
+              <Route
+                path="/complaints/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['citizen', 'authority', 'collector']}>
+                    <ComplaintDetail />
+                  </ProtectedRoute>
+                }
+              />
 
-          {/* 404 Route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
-      <Footer />
+              {/* Corporation Hub */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['authority']}>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Driver Daily Tasks */}
+              <Route
+                path="/tasks"
+                element={
+                  <ProtectedRoute allowedRoles={['collector', 'authority']}>
+                    <Tasks />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
+
+          {/* Right Stats & Activity Panel (Matching Reference Image) */}
+          <RightPanel />
+        </div>
+      </div>
     </div>
   );
 };

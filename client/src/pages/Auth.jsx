@@ -50,11 +50,11 @@ export const Login = () => {
   };
 
   return (
-    <div className="container" style={{ maxWidth: '480px', padding: '60px 20px 80px 20px' }}>
-      <div className="card">
+    <div style={{ maxWidth: '480px', margin: '20px auto' }}>
+      <div className="white-card">
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <span style={{ fontSize: '36px', display: 'block', marginBottom: '8px' }}>🔐</span>
-          <h2 style={{ fontSize: '1.6rem', color: '#fff', fontFamily: 'var(--font-heading)' }}>
+          <span style={{ fontSize: '38px', display: 'block', marginBottom: '8px' }}>🔐</span>
+          <h2 style={{ fontSize: '1.6rem', color: 'var(--text-main)', fontFamily: 'var(--font-heading)', fontWeight: '800' }}>
             Sign In to CleanChennai
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
@@ -63,26 +63,26 @@ export const Login = () => {
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', borderRadius: 'var(--radius-md)', padding: '10px 14px', color: '#fca5a5', marginBottom: '16px', fontSize: '0.88rem' }}>
+          <div style={{ background: 'var(--rose-light)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-md)', padding: '10px 14px', color: 'var(--rose)', marginBottom: '16px', fontSize: '0.88rem', fontWeight: '600' }}>
             {error}
           </div>
         )}
 
         {/* 1-Click Role Access Buttons */}
         <div style={{ marginBottom: '24px' }}>
-          <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '10px', textAlign: 'center' }}>
+          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '10px', textAlign: 'center' }}>
             ⚡ 1-Click Instant Demo Access
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button
               type="button"
               className="btn-secondary"
-              style={{ justifyContent: 'flex-start', padding: '10px 14px' }}
+              style={{ justifyContent: 'flex-start', padding: '12px 14px', width: '100%' }}
               onClick={() => handleQuickLogin('citizen@demo.com')}
             >
-              <span style={{ fontSize: '1.2rem' }}>👤</span>
+              <span style={{ fontSize: '1.4rem' }}>👤</span>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ color: '#fff', fontWeight: '600', fontSize: '0.88rem' }}>Citizen Portal (Priya)</div>
+                <div style={{ color: 'var(--text-main)', fontWeight: '700', fontSize: '0.9rem' }}>Citizen Portal (Priya)</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Report waste, photo AI analysis &amp; timeline tracking</div>
               </div>
             </button>
@@ -90,12 +90,12 @@ export const Login = () => {
             <button
               type="button"
               className="btn-secondary"
-              style={{ justifyContent: 'flex-start', padding: '10px 14px' }}
+              style={{ justifyContent: 'flex-start', padding: '12px 14px', width: '100%' }}
               onClick={() => handleQuickLogin('authority@demo.com')}
             >
-              <span style={{ fontSize: '1.2rem' }}>🏛️</span>
+              <span style={{ fontSize: '1.4rem' }}>🏛️</span>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ color: '#fff', fontWeight: '600', fontSize: '0.88rem' }}>Corporation Admin (Karthik)</div>
+                <div style={{ color: 'var(--text-main)', fontWeight: '700', fontSize: '0.9rem' }}>Corporation Admin (Karthik)</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Review stored photos, remove duplicates &amp; assess risk</div>
               </div>
             </button>
@@ -103,21 +103,21 @@ export const Login = () => {
             <button
               type="button"
               className="btn-secondary"
-              style={{ justifyContent: 'flex-start', padding: '10px 14px' }}
+              style={{ justifyContent: 'flex-start', padding: '12px 14px', width: '100%' }}
               onClick={() => handleQuickLogin('collector@demo.com')}
             >
-              <span style={{ fontSize: '1.2rem' }}>🚛</span>
+              <span style={{ fontSize: '1.4rem' }}>🚛</span>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ color: '#fff', fontWeight: '600', fontSize: '0.88rem' }}>Sanitation Driver (Murugan)</div>
+                <div style={{ color: 'var(--text-main)', fontWeight: '700', fontSize: '0.9rem' }}>Sanitation Driver (Murugan)</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Daily tasks queue &amp; closed-loop verification</div>
               </div>
             </button>
           </div>
         </div>
 
-        <div style={{ position: 'relative', textAlign: 'center', margin: '20px 0' }}>
-          <hr style={{ border: 'none', borderTop: '1px solid var(--border-subtle)' }} />
-          <span style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: 'var(--bg-card)', padding: '0 12px', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+        <div style={{ position: 'relative', textAlign: 'center', margin: '24px 0' }}>
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border-light)' }} />
+          <span style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: '#ffffff', padding: '0 12px', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700' }}>
             OR EMAIL SIGN IN
           </span>
         </div>
@@ -125,7 +125,7 @@ export const Login = () => {
         {/* Regular Login Form */}
         <form onSubmit={handleLoginSubmit}>
           <div style={{ marginBottom: '14px' }}>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '6px' }}>
               Email Address
             </label>
             <input
@@ -137,7 +137,7 @@ export const Login = () => {
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '6px' }}>
               Password
             </label>
             <input
@@ -151,7 +151,7 @@ export const Login = () => {
           <button
             type="submit"
             className="btn-primary"
-            style={{ width: '100%', padding: '12px' }}
+            style={{ width: '100%', padding: '12px', fontSize: '0.92rem' }}
             disabled={loading}
           >
             {loading ? 'Signing in...' : 'Sign In'}
@@ -160,7 +160,7 @@ export const Login = () => {
 
         <div style={{ textAlign: 'center', marginTop: '18px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
           Don't have an account?{' '}
-          <Link to="/register" style={{ color: 'var(--emerald-500)', fontWeight: '600' }}>
+          <Link to="/register" style={{ color: 'var(--primary)', fontWeight: '700' }}>
             Register as a Citizen
           </Link>
         </div>
@@ -200,11 +200,11 @@ export const Register = () => {
   };
 
   return (
-    <div className="container" style={{ maxWidth: '480px', padding: '60px 20px 80px 20px' }}>
-      <div className="card">
+    <div style={{ maxWidth: '480px', margin: '20px auto' }}>
+      <div className="white-card">
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <span style={{ fontSize: '36px', display: 'block', marginBottom: '8px' }}>📝</span>
-          <h2 style={{ fontSize: '1.6rem', color: '#fff', fontFamily: 'var(--font-heading)' }}>
+          <span style={{ fontSize: '38px', display: 'block', marginBottom: '8px' }}>📝</span>
+          <h2 style={{ fontSize: '1.6rem', color: 'var(--text-main)', fontFamily: 'var(--font-heading)', fontWeight: '800' }}>
             Citizen Registration
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
@@ -213,14 +213,14 @@ export const Register = () => {
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', borderRadius: 'var(--radius-md)', padding: '10px 14px', color: '#fca5a5', marginBottom: '16px', fontSize: '0.88rem' }}>
+          <div style={{ background: 'var(--rose-light)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-md)', padding: '10px 14px', color: 'var(--rose)', marginBottom: '16px', fontSize: '0.88rem', fontWeight: '600' }}>
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '14px' }}>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '6px' }}>
               Full Name
             </label>
             <input
@@ -232,7 +232,7 @@ export const Register = () => {
           </div>
 
           <div style={{ marginBottom: '14px' }}>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '6px' }}>
               Email Address
             </label>
             <input
@@ -244,7 +244,7 @@ export const Register = () => {
           </div>
 
           <div style={{ marginBottom: '14px' }}>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '6px' }}>
               Chennai Locality / Ward
             </label>
             <input
@@ -256,7 +256,7 @@ export const Register = () => {
           </div>
 
           <div style={{ marginBottom: '22px' }}>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '6px' }}>
               Password
             </label>
             <input
@@ -270,7 +270,7 @@ export const Register = () => {
           <button
             type="submit"
             className="btn-primary"
-            style={{ width: '100%', padding: '12px' }}
+            style={{ width: '100%', padding: '12px', fontSize: '0.92rem' }}
             disabled={loading}
           >
             {loading ? 'Creating account...' : 'Register as Citizen'}
@@ -279,7 +279,7 @@ export const Register = () => {
 
         <div style={{ textAlign: 'center', marginTop: '18px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
           Already have an account?{' '}
-          <Link to="/login" style={{ color: 'var(--emerald-500)', fontWeight: '600' }}>
+          <Link to="/login" style={{ color: 'var(--primary)', fontWeight: '700' }}>
             Sign In
           </Link>
         </div>

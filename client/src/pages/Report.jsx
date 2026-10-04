@@ -76,9 +76,9 @@ export const Report = () => {
   };
 
   return (
-    <div className="container" style={{ maxWidth: '800px', padding: '40px 20px 80px 20px' }}>
+    <div style={{ maxWidth: '860px', margin: '0 auto' }}>
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-heading)', color: '#fff', marginBottom: '6px' }}>
+        <h1 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-heading)', color: 'var(--text-main)', marginBottom: '6px' }}>
           Report Waste Overflow
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
@@ -87,16 +87,16 @@ export const Report = () => {
       </div>
 
       {error && (
-        <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', borderRadius: 'var(--radius-md)', padding: '12px 16px', color: '#fca5a5', marginBottom: '20px' }}>
+        <div style={{ background: 'var(--rose-light)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-md)', padding: '12px 16px', color: 'var(--rose)', marginBottom: '20px', fontWeight: '600' }}>
           {error}
         </div>
       )}
 
       {duplicateWarning && (
-        <div className="duplicate-banner">
+        <div className="duplicate-box">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <span style={{ fontSize: '1.2rem' }}>⚠️</span>
-            <strong style={{ color: 'var(--amber-500)' }}>Nearby Report Already Logged</strong>
+            <strong style={{ color: '#b45309' }}>Nearby Report Already Logged ({duplicateWarning.distanceMeters}m away)</strong>
           </div>
           <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
             A report was already registered {duplicateWarning.distanceMeters}m away at this spot. We can merge your submission with the existing municipal ticket to expedite dispatch.
@@ -120,7 +120,7 @@ export const Report = () => {
         </div>
       )}
 
-      <div className="card">
+      <div className="white-card">
         {/* Step 1: Photo & Automated Analysis */}
         <div style={{ marginBottom: '28px' }}>
           <PhotoUpload
@@ -134,7 +134,7 @@ export const Report = () => {
         {/* Step 2: Chennai Map Geo-Tagging */}
         <div style={{ marginBottom: '28px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <label style={{ fontSize: '0.88rem', fontWeight: '600', color: 'var(--text-secondary)' }}>
+            <label style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-main)' }}>
               📍 Location on Chennai Grid
             </label>
             <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
@@ -149,7 +149,13 @@ export const Report = () => {
                 key={p.name}
                 type="button"
                 className={`btn-secondary btn-sm ${areaName === p.name ? 'active' : ''}`}
-                style={{ fontSize: '0.78rem', padding: '4px 10px' }}
+                style={{
+                  fontSize: '0.78rem',
+                  padding: '5px 12px',
+                  backgroundColor: areaName === p.name ? 'var(--primary-light)' : 'var(--bg-input)',
+                  color: areaName === p.name ? 'var(--primary)' : 'var(--text-secondary)',
+                  borderColor: areaName === p.name ? 'var(--primary)' : 'var(--border-light)'
+                }}
                 onClick={() => handleSelectPreset(p)}
               >
                 {p.name}
@@ -158,7 +164,7 @@ export const Report = () => {
           </div>
 
           <MapPicker lat={lat} lng={lng} onChange={(newLat, newLng) => { setLat(newLat); setLng(newLng); }} />
-          <div style={{ marginTop: '8px' }}>
+          <div style={{ marginTop: '10px' }}>
             <input
               type="text"
               value={areaName}
@@ -171,7 +177,7 @@ export const Report = () => {
 
         {/* Step 3: Description & Severity */}
         <div style={{ marginBottom: '28px' }}>
-          <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+          <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '8px' }}>
             📝 Issue Details &amp; Notes
           </label>
           <textarea
@@ -183,7 +189,7 @@ export const Report = () => {
         </div>
 
         <div style={{ marginBottom: '32px' }}>
-          <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+          <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '8px' }}>
             🚦 Citizen Severity Assessment
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
@@ -191,8 +197,9 @@ export const Report = () => {
               type="button"
               className={`btn-secondary ${severity === 'low' ? 'active' : ''}`}
               style={{
-                borderColor: severity === 'low' ? 'var(--emerald-500)' : 'var(--border-subtle)',
-                background: severity === 'low' ? 'rgba(16, 185, 129, 0.15)' : 'transparent'
+                borderColor: severity === 'low' ? 'var(--emerald)' : 'var(--border-light)',
+                backgroundColor: severity === 'low' ? 'var(--emerald-light)' : 'var(--bg-input)',
+                color: severity === 'low' ? 'var(--emerald)' : 'var(--text-secondary)'
               }}
               onClick={() => setSeverity('low')}
             >
@@ -202,8 +209,9 @@ export const Report = () => {
               type="button"
               className={`btn-secondary ${severity === 'medium' ? 'active' : ''}`}
               style={{
-                borderColor: severity === 'medium' ? 'var(--blue-500)' : 'var(--border-subtle)',
-                background: severity === 'medium' ? 'rgba(59, 130, 246, 0.15)' : 'transparent'
+                borderColor: severity === 'medium' ? 'var(--blue)' : 'var(--border-light)',
+                backgroundColor: severity === 'medium' ? 'var(--blue-light)' : 'var(--bg-input)',
+                color: severity === 'medium' ? 'var(--blue)' : 'var(--text-secondary)'
               }}
               onClick={() => setSeverity('medium')}
             >
@@ -213,8 +221,9 @@ export const Report = () => {
               type="button"
               className={`btn-secondary ${severity === 'high' ? 'active' : ''}`}
               style={{
-                borderColor: severity === 'high' ? 'var(--rose-500)' : 'var(--border-subtle)',
-                background: severity === 'high' ? 'rgba(239, 68, 68, 0.15)' : 'transparent'
+                borderColor: severity === 'high' ? 'var(--rose)' : 'var(--border-light)',
+                backgroundColor: severity === 'high' ? 'var(--rose-light)' : 'var(--bg-input)',
+                color: severity === 'high' ? 'var(--rose)' : 'var(--text-secondary)'
               }}
               onClick={() => setSeverity('high')}
             >
@@ -224,7 +233,7 @@ export const Report = () => {
         </div>
 
         {/* Submit */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button
             type="button"
             className="btn-primary"
