@@ -12,7 +12,7 @@ import {
 } from '../components.jsx';
 
 export default function Login() {
-  const { user, login, register } = useAuth();
+  const { user, login, register, logout } = useAuth();
   const navigate = useNavigate();
 
   const [tab, setTab] = useState('login'); // 'login' | 'register'

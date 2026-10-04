@@ -50,6 +50,11 @@ export function AuthProvider({ children }) {
     return res.user;
   };
 
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+  };
+
   const switchRole = async (targetRole) => {
     const creds = {
       citizen: { email: 'citizen@demo.com', password: 'Demo@123' },

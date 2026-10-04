@@ -28,8 +28,8 @@ class ErrorBoundary extends React.Component {
             <p style={{ fontSize: '14px', marginBottom: '16px', color: '#555' }}>
               The application encountered an unexpected state while loading this page:
             </p>
-            <pre style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px', borderRadius: '8px', color: '#991b1b', fontSize: '12px', overflowX: 'auto', marginBottom: '20px' }}>
-              {this.state.error?.message || String(this.state.error)}
+            <pre style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px', borderRadius: '8px', color: '#991b1b', fontSize: '12px', overflowX: 'auto', marginBottom: '20px', whiteSpace: 'pre-wrap' }}>
+              {this.state.error?.stack || this.state.error?.message || String(this.state.error)}
             </pre>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <button

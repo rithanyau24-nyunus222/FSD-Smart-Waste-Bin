@@ -100,6 +100,7 @@ export default function Citizen() {
 
   const [selectedLocation, setSelectedLocation] = useState({ lat: 13.0827, lng: 80.2707 });
   const [selectedBin, setSelectedBin] = useState(null);
+  const [customArea, setCustomArea] = useState('');
   const [severity, setSeverity] = useState('medium');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
