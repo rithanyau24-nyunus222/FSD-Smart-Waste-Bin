@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, CircleMarker, Polyline, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useAuth } from '../auth.jsx';
-import { Logo, StatusBadge, Truck, Sprig, Alerts, BackToHomeButton, BinIcon, CHENNAI_AREAS } from '../components.jsx';
+import { Logo, StatusBadge, Truck, Sprig, Alerts, BackToHomeButton, BinIcon, CHENNAI_AREAS, MotionSmartBin } from '../components.jsx';
 import api, { uploadPhoto } from '../api.js';
+import { detectWasteInImage } from '../aiWasteDetector.js';
 
 // Image compressor helper for after photo
 async function compressAfterImage(file) {
@@ -91,6 +92,7 @@ export default function Collector() {
   const [afterPreview, setAfterPreview] = useState(null);
   const [afterSizeKb, setAfterSizeKb] = useState(null);
   const [afterLoading, setAfterLoading] = useState(false);
+  const [afterAiAudit, setAfterAiAudit] = useState(null);
   const [collectError, setCollectError] = useState('');
   const [submittingCollect, setSubmittingCollect] = useState(false);
   const fileInputRef = useRef(null);
@@ -177,11 +179,17 @@ export default function Collector() {
     setAfterLoading(true);
 
     try {
-      const { mainBlob, thumbBlob } = await compressAfterImage(file);
+      const [compressRes, aiResult] = await Promise.all([
+        compressAfterImage(file),
+        detectWasteInImage(file, 'after')
+      ]);
+
+      const { mainBlob, thumbBlob } = compressRes;
       const res = await uploadPhoto(mainBlob, thumbBlob);
       setAfterPhotoId(res.id);
       setAfterSizeKb((mainBlob.size / 1024).toFixed(1));
       setAfterPreview(URL.createObjectURL(mainBlob));
+      setAfterAiAudit(aiResult);
     } catch (err) {
       setCollectError(err.message || 'Error uploading photo');
     } finally {
@@ -455,6 +463,26 @@ export default function Collector() {
                 <div style={{ flex: 1 }}>
                   <div className="t7" style={{ fontWeight: 700 }}>Cleaned bin photo</div>
                   <div className="t7" style={{ opacity: 0.7 }}>Size: {afterSizeKb} KB</div>
+                  {afterAiAudit && (
+                    <div
+                      style={{
+                        marginTop: '6px',
+                        padding: '3px 8px',
+                        borderRadius: '8px',
+                        backgroundColor: 'var(--sprout)',
+                        border: '1px solid var(--green)',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        color: 'var(--green)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <span>🤖</span>
+                      <span>AI: {afterAiAudit.label} ({afterAiAudit.confidence}%)</span>
+                    </div>
+                  )}
                   <button
                     type="button"
                     className="pill pill-ghost"
@@ -608,52 +636,59 @@ export default function Collector() {
               backgroundColor: 'var(--pink)',
               padding: '28px var(--pad-x) 0',
               borderBottom: '2px solid var(--green)',
-              position: 'relative'
+              position: 'relative',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-end',
+              flexWrap: 'wrap',
+              gap: '16px'
             }}
           >
-            <div className="t4" style={{ color: 'var(--green)', marginBottom: '4px' }}>
-              good morning
-            </div>
-            <h1
-              style={{
-                fontFamily: 'var(--font-peace)',
-                fontSize: 'clamp(34px, 4.5vw, 56px)',
-                lineHeight: 1,
-                margin: '0 0 14px',
-                color: 'var(--green)'
-              }}
-            >
-              Today's route
-            </h1>
-
-            {/* Progress row: flex, align centre, gap 12px, margin 14px 0 18px */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '14px 0 18px', maxWidth: '420px' }}>
-              <div
+            <div style={{ paddingBottom: '22px', maxWidth: '520px' }}>
+              <div className="t4" style={{ color: 'var(--green)', marginBottom: '4px' }}>
+                good morning
+              </div>
+              <h1
                 style={{
-                  flex: 1,
-                  height: '16px',
-                  backgroundColor: 'var(--paper)',
-                  border: '2px solid var(--green)',
-                  borderRadius: '999px',
-                  overflow: 'hidden'
+                  fontFamily: 'var(--font-peace)',
+                  fontSize: 'clamp(34px, 4.5vw, 56px)',
+                  lineHeight: 1,
+                  margin: '0 0 14px',
+                  color: 'var(--green)'
                 }}
               >
+                Today's route
+              </h1>
+
+              {/* Progress row: flex, align centre, gap 12px */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '420px' }}>
                 <div
                   style={{
-                    height: '100%',
-                    width: `${progressRatio}%`,
-                    backgroundColor: 'var(--sprout)',
-                    transition: 'width 0.3s ease'
+                    flex: 1,
+                    height: '16px',
+                    backgroundColor: 'var(--paper)',
+                    border: '2px solid var(--green)',
+                    borderRadius: '999px',
+                    overflow: 'hidden'
                   }}
-                />
+                >
+                  <div
+                    style={{
+                      height: '100%',
+                      width: `${progressRatio}%`,
+                      backgroundColor: 'var(--sprout)',
+                      transition: 'width 0.3s ease'
+                    }}
+                  />
+                </div>
+                <span className="t7" style={{ color: 'var(--green)', fontWeight: 600, flexShrink: 0 }}>
+                  {doneTasksCount} of {totalTasksCount} done
+                </span>
               </div>
-              <span className="t7" style={{ color: 'var(--green)', fontWeight: 600, flexShrink: 0 }}>
-                {doneTasksCount} of {totalTasksCount} done
-              </span>
             </div>
 
-            {/* Truck SVG at right, flush with bottom border */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-24px' }}>
+            {/* Truck SVG at right in driving motion flush with bottom border */}
+            <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: '-2px' }}>
               <Truck width={200} height={77} className="citizen-hero-illustration" />
             </div>
           </section>
@@ -895,45 +930,27 @@ export default function Collector() {
                           <StatusBadge status={isInProgress ? 'In Progress' : 'Assigned'} />
                         </div>
 
-                        {/* Task Card Visual & Details Row */}
-                        <div
-                          style={{
-                            display: 'flex',
-                            gap: '12px',
-                            backgroundColor: 'rgba(41, 66, 55, 0.04)',
-                            borderRadius: '16px',
-                            padding: '10px 12px',
-                            marginBottom: '14px',
-                            border: '1px solid rgba(41, 66, 55, 0.1)'
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: '54px',
-                              height: '54px',
-                              borderRadius: '12px',
-                              border: '1.5px solid var(--green)',
-                              backgroundColor: 'var(--sprout)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              flexShrink: 0
-                            }}
-                          >
-                            <BinIcon size={26} color="var(--green)" />
+                        {/* Task Card Visual with MotionSmartBin in real-time motion */}
+                        <div style={{ marginBottom: '12px' }}>
+                          <MotionSmartBin
+                            code={c.binCode || 'BIN-004'}
+                            area={c.area || 'Velachery'}
+                            fillLevel={88}
+                            battery={91}
+                            compact={true}
+                            showTelemetry={true}
+                          />
+                        </div>
+
+                        {/* Description note */}
+                        <div style={{ padding: '8px 12px', backgroundColor: 'rgba(41, 66, 55, 0.04)', borderRadius: '12px', marginBottom: '14px' }}>
+                          <div className="t7" style={{ fontWeight: 600, color: 'var(--green)' }}>
+                            {c.description || 'Public bin overflow reported by citizen'}
                           </div>
-                          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                            <div className="t7" style={{ fontWeight: 600, color: 'var(--green)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {c.description || 'Public bin overflow reported'}
-                            </div>
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px', flexWrap: 'wrap' }}>
-                              <span className="status-badge" style={{ fontSize: '10px', padding: '1px 6px', backgroundColor: 'var(--pink)' }}>
-                                Urgent Sensor Fill
-                              </span>
-                              <span className="t10" style={{ opacity: 0.75 }}>
-                                ~7 mins via Anna Salai
-                              </span>
-                            </div>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px', flexWrap: 'wrap' }}>
+                            <span className="t10" style={{ opacity: 0.75 }}>
+                              ~7 mins via Chennai Route Corridor
+                            </span>
                           </div>
                         </div>
 

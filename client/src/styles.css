@@ -871,6 +871,10 @@ h3 {
   display: none;
 }
 
+/* ============================================================= */
+/* RICH MOTION & ANIMATION SYSTEM (BINS, SENSORS, TRUCKS, WAVES) */
+/* ============================================================= */
+
 /* Fade and Rise Motion */
 @keyframes fadeRise {
   from {
@@ -884,16 +888,16 @@ h3 {
 }
 
 .fade-rise {
-  animation: fadeRise 0.45s ease forwards;
+  animation: fadeRise 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Floating / Drifting Dots */
 @keyframes driftDots {
   0%, 100% {
-    transform: translateY(0);
+    transform: translateY(0px) rotate(0deg);
   }
   50% {
-    transform: translateY(-8px);
+    transform: translateY(-10px) rotate(8deg);
   }
 }
 
@@ -902,7 +906,274 @@ h3 {
 }
 
 .drifting-dot-alt {
-  animation: driftDots 5s ease-in-out infinite 1.5s;
+  animation: driftDots 5.5s ease-in-out infinite 1.2s;
+}
+
+/* Bin Character Floating / Breathing Motion */
+@keyframes binFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.8deg);
+  }
+}
+
+.bin-motion-float {
+  animation: binFloat 4.2s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+@keyframes binBreathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02, 0.98);
+  }
+}
+
+.bin-motion-breathe {
+  animation: binBreathe 3.5s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+/* Leaf Sprigs Swaying */
+@keyframes sprigSwayLeft {
+  0%, 100% {
+    transform: rotate(-35deg);
+  }
+  50% {
+    transform: rotate(-22deg);
+  }
+}
+
+@keyframes sprigSwayRight {
+  0%, 100% {
+    transform: rotate(30deg);
+  }
+  50% {
+    transform: rotate(42deg);
+  }
+}
+
+.sprig-sway-left {
+  animation: sprigSwayLeft 3s ease-in-out infinite;
+  transform-origin: 230px 240px;
+}
+
+.sprig-sway-right {
+  animation: sprigSwayRight 3.4s ease-in-out infinite 0.5s;
+  transform-origin: 295px 220px;
+}
+
+.mini-sprig-left {
+  animation: sprigSwayLeft 2.8s ease-in-out infinite;
+  transform-origin: 135px 52px;
+}
+
+.mini-sprig-right {
+  animation: sprigSwayRight 3.2s ease-in-out infinite 0.4s;
+  transform-origin: 165px 52px;
+}
+
+/* Cute Bin Character Blinking */
+@keyframes eyeBlink {
+  0%, 92%, 100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+
+.bin-eye-blink {
+  animation: eyeBlink 4.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* Waving Fluid / Fill Motion */
+@keyframes waveFlow {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.wave-fill-motion {
+  animation: waveFlow 3s linear infinite;
+}
+
+/* Sensor Ping / Radar Wave */
+@keyframes sensorPing {
+  0% {
+    r: 6;
+    opacity: 0.9;
+  }
+  75% {
+    r: 22;
+    opacity: 0;
+  }
+  100% {
+    r: 22;
+    opacity: 0;
+  }
+}
+
+.sensor-ping-circle {
+  animation: sensorPing 2.4s ease-out infinite;
+}
+
+/* Map Marker Overflow Beacon Pulse */
+@keyframes markerPulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+}
+
+.marker-pulse {
+  animation: markerPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Rotating Radar Sweep for Map */
+@keyframes radarSweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.radar-sweep-beam {
+  animation: radarSweep 6s linear infinite;
+  transform-origin: center center;
+}
+
+/* Truck Drive / Suspension Bounce */
+@keyframes truckBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.truck-driving-bounce {
+  animation: truckBounce 1.8s ease-in-out infinite;
+}
+
+/* Truck Wheel Rotation */
+@keyframes wheelSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.wheel-spinning {
+  animation: wheelSpin 1.4s linear infinite;
+  transform-origin: center;
+}
+
+/* Sonar Ultrasonic Beam Pulse */
+@keyframes sonarBeam {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.7);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1.3);
+  }
+}
+
+.sonar-beam-pulse {
+  animation: sonarBeam 2s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+/* Interactive Card & Badge Motion Highlights */
+.interactive-hover-lift {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease;
+}
+
+.interactive-hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(41, 66, 55, 0.12);
+}
+
+.live-beacon-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  background-color: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  animation: beaconRings 2s infinite;
+}
+
+.live-beacon-dot.pink {
+  background-color: var(--pink);
+  box-shadow: 0 0 0 0 rgba(255, 194, 239, 0.7);
+}
+
+@keyframes beaconRings {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+/* ALIGNMENT & SPACING UTILITIES */
+.header-grid-aligned {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 14px var(--pad-x);
+  border-bottom: 2px solid var(--green);
+  background-color: var(--paper);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-sizing: border-box;
+}
+
+.section-neat-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.card-neat-aligned {
+  background-color: var(--paper);
+  border: 2px solid var(--green);
+  border-radius: 20px;
+  padding: 18px 20px;
+  box-sizing: border-box;
 }
 
 /* Motion Preferences */
@@ -918,7 +1189,22 @@ h3 {
   .drifting-dot,
   .drifting-dot-alt,
   .skeleton-pulse,
-  .fade-rise {
+  .fade-rise,
+  .bin-motion-float,
+  .bin-motion-breathe,
+  .sprig-sway-left,
+  .sprig-sway-right,
+  .mini-sprig-left,
+  .mini-sprig-right,
+  .bin-eye-blink,
+  .wave-fill-motion,
+  .sensor-ping-circle,
+  .marker-pulse,
+  .radar-sweep-beam,
+  .truck-driving-bounce,
+  .wheel-spinning,
+  .sonar-beam-pulse,
+  .live-beacon-dot {
     animation: none !important;
   }
 }
@@ -1176,7 +1462,16 @@ h3 {
 /* Responsive Breakpoints */
 @media (max-width: 900px) {
   .hero-split-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+  }
+
+  .roles-split-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .roles-split-grid > div:first-child {
+    border-right: none !important;
+    border-bottom: 2px solid var(--green) !important;
   }
 
   .hero-left-half {
@@ -1270,3 +1565,188 @@ h3 {
     display: flex;
   }
 }
+
+/* Full-Bleed Modern Responsive Landing Page (Edge-to-Edge across Laptop, iPad/Tablet, Mobile) */
+.landing-page-root {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--paper);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.landing-mock-bar {
+  background-color: #e7e7ce;
+  border-bottom: 2px solid var(--green);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.landing-ticker-bar {
+  background-color: var(--green);
+  color: var(--pink);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-bottom: 2px solid var(--green);
+  text-align: center;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.landing-header {
+  background-color: var(--paper);
+  border-bottom: 2px solid var(--green);
+  padding: 12px clamp(16px, 3.5vw, 48px);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.landing-nav-links {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* 50/50 Hero Grid covering page width */
+.landing-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  border-bottom: 2px solid var(--green);
+  min-height: clamp(480px, 56vh, 640px);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.landing-hero-left {
+  background-color: var(--green);
+  color: var(--paper);
+  padding: clamp(28px, 4vw, 56px) clamp(20px, 4.5vw, 64px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-right: 2px solid var(--green);
+  box-sizing: border-box;
+}
+
+.landing-hero-right {
+  background-color: var(--pink);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 380px;
+}
+
+.landing-auth-inputs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 2-Column Roles Grid covering page width */
+.landing-roles-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  border-bottom: 2px solid var(--green);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Tablets & Mobile Screens (<= 960px) */
+@media (max-width: 960px) {
+  .landing-hero-grid {
+    grid-template-columns: 1fr;
+  }
+  .landing-hero-left {
+    border-right: none;
+    border-bottom: 2px solid var(--green);
+    padding: clamp(24px, 4vw, 40px) clamp(16px, 3.5vw, 32px);
+  }
+  .landing-hero-right {
+    min-height: 300px;
+    max-height: 420px;
+  }
+  .landing-roles-grid {
+    grid-template-columns: 1fr;
+  }
+  .landing-roles-grid > div:first-child {
+    border-right: none !important;
+    border-bottom: 2px solid var(--green) !important;
+  }
+}
+
+/* Mobile Phones (<= 640px) */
+@media (max-width: 640px) {
+  .landing-header {
+    grid-template-columns: 1fr auto;
+    padding: 10px 14px;
+    gap: 8px;
+  }
+  .landing-nav-links {
+    display: none;
+  }
+  .landing-hero-right {
+    min-height: 250px;
+    max-height: 300px;
+  }
+  .landing-auth-inputs {
+    flex-direction: column;
+  }
+  .landing-auth-inputs input {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+/* AI Computer Vision Scanner Animation */
+@keyframes aiScanline {
+  0% { top: 2%; opacity: 0.8; }
+  50% { top: 92%; opacity: 1; }
+  100% { top: 2%; opacity: 0.8; }
+}
+
+@keyframes aiPulseBorder {
+  0% { box-shadow: 0 0 0 0 rgba(255, 194, 239, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(255, 194, 239, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 194, 239, 0); }
+}
+
+.ai-scan-laser {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #b6cc58, #ffc2ef, #b6cc58, transparent);
+  box-shadow: 0 0 10px #b6cc58, 0 0 16px #ffc2ef;
+  animation: aiScanline 2.2s ease-in-out infinite;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.ai-reticle-box {
+  position: absolute;
+  border: 2px solid #ffc2ef;
+  background: rgba(255, 194, 239, 0.15);
+  box-shadow: 0 0 8px rgba(255, 194, 239, 0.4);
+  pointer-events: none;
+  border-radius: 6px;
+  animation: aiPulseBorder 2s infinite;
+}
+
+

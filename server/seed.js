@@ -10,6 +10,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { User, Bin, Complaint, Task, Notification, Photo } from './models.js';
 
@@ -108,6 +109,30 @@ async function seed() {
       { code: 'BIN-015', area: 'Sholinganallur', location: { type: 'Point', coordinates: [80.2279, 12.9010] }, fillLevel: 35 }
     ]);
 
+    // 4b. Load High-Quality Realistic Generated Photos
+    let beforeBuffer, afterBuffer;
+    try {
+      beforeBuffer = fs.readFileSync(path.join(__dirname, 'assets/before.jpg'));
+      afterBuffer = fs.readFileSync(path.join(__dirname, 'assets/after.jpg'));
+    } catch {
+      const fallback = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNk+M9QzwAEjDAGNYFqCgAvXQM1j2m6uAAAAABJRU5ErkJggg==', 'base64');
+      beforeBuffer = fallback;
+      afterBuffer = fallback;
+    }
+
+    const photoBefore = await Photo.create({
+      hash: 'demohashbefore_real',
+      data: beforeBuffer,
+      thumb: beforeBuffer,
+      mime: 'image/jpeg'
+    });
+    const photoAfter = await Photo.create({
+      hash: 'demohashafter_real',
+      data: afterBuffer,
+      thumb: afterBuffer,
+      mime: 'image/jpeg'
+    });
+
     // 5. Create 8 Complaints across all statuses with realistic history
     console.log('Seeding 8 complaints across statuses...');
     const now = Date.now();
@@ -124,7 +149,7 @@ async function seed() {
         description: 'Large public bin severely overflowing onto pedestrian walkway near shopping complex.',
         severity: 'high',
         location: bins[1].location,
-        photos: [],
+        photos: [{ photo: photoBefore._id, kind: 'before' }],
         status: 'Pending',
         reportCount: 2,
         priority: 7, // 3 + 2 + 2 (fill > 80)
@@ -232,7 +257,10 @@ async function seed() {
         description: 'Dry leaves and packaging overflow near bus terminal cleared.',
         severity: 'medium',
         location: bins[2].location,
-        photos: [],
+        photos: [
+          { photo: photoBefore._id, kind: 'before' },
+          { photo: photoAfter._id, kind: 'after' }
+        ],
         status: 'Collected',
         reportCount: 1,
         priority: 3,
@@ -257,7 +285,10 @@ async function seed() {
         description: 'Industrial estate corner bin overflow cleared.',
         severity: 'low',
         location: bins[5].location,
-        photos: [],
+        photos: [
+          { photo: photoBefore._id, kind: 'before' },
+          { photo: photoAfter._id, kind: 'after' }
+        ],
         status: 'Collected',
         reportCount: 1,
         priority: 2,

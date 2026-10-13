@@ -10,23 +10,21 @@ import workRouter from './routes/work.js';
 
 import fs from 'fs';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '.env') });
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/smart-waste';
 
 // Database connection
-if (process.env.MONGODB_URI) {
-  mongoose
-    .connect(process.env.MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB Atlas'))
-    .catch((err) => console.error('MongoDB connection error:', err.message));
-} else {
-  console.log('MONGODB_URI not provided yet in .env');
-}
+mongoose
+  .connect(MONGODB_URI)
+  .then(() => console.log('Connected to MongoDB:', MONGODB_URI))
+  .catch((err) => console.error('MongoDB connection error:', err.message));
 
 // CORS header middleware
 app.use((req, res, next) => {
@@ -40,7 +38,8 @@ app.use((req, res, next) => {
 });
 
 // Body parsing
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

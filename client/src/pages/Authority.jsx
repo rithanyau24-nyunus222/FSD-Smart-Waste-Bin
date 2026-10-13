@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, CircleMarker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Logo, StatusBadge, Alerts, BackToHomeButton, CHENNAI_AREAS } from '../components.jsx';
+import { Logo, StatusBadge, Alerts, BackToHomeButton, CHENNAI_AREAS, MotionSmartBin } from '../components.jsx';
 import api from '../api.js';
 
 function getBinMarkerColor(fillLevel) {
@@ -524,9 +524,28 @@ export default function Authority() {
                 flexDirection: 'column'
               }}
             >
-              <h2 style={{ fontFamily: 'var(--font-peace)', fontSize: '22px', margin: '0 0 10px', color: 'var(--green)' }}>
-                Live bins
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                <h2 style={{ fontFamily: 'var(--font-peace)', fontSize: '22px', margin: 0, color: 'var(--green)' }}>
+                  Live Bins Radar
+                </h2>
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: 'var(--green)',
+                    backgroundColor: 'var(--paper)',
+                    border: '1.5px solid var(--green)',
+                    borderRadius: '999px',
+                    padding: '4px 10px'
+                  }}
+                >
+                  <span className="live-beacon-dot" />
+                  <span>IoT Telemetry Active</span>
+                </div>
+              </div>
 
               <div style={{ flex: 1, minHeight: '280px', borderRadius: '18px', overflow: 'hidden', border: '2px solid var(--green)', position: 'relative' }}>
                 <MapContainer center={[13.0827, 80.2707]} zoom={12} style={{ height: '100%', width: '100%' }}>
@@ -555,9 +574,16 @@ export default function Authority() {
                         }}
                       >
                         <Popup>
-                          <strong>Bin {bin.code}</strong> &mdash; {bin.area}
-                          <br />
-                          Fill Level: {bin.fillLevel}%
+                          <div style={{ minWidth: '180px', padding: '4px' }}>
+                            <MotionSmartBin
+                              code={bin.code}
+                              area={bin.area}
+                              fillLevel={bin.fillLevel}
+                              battery={bin.battery || 92}
+                              compact={true}
+                              showTelemetry={true}
+                            />
+                          </div>
                         </Popup>
                       </CircleMarker>
                     );
@@ -790,8 +816,13 @@ export default function Authority() {
                     }}
                     className="t7"
                   >
-                    <span style={{ color: 'var(--green)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {c.binCode} {c.area} &middot; {c.description}
+                    <span style={{ color: 'var(--green)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '10px', padding: '1px 5px', borderRadius: '4px', backgroundColor: 'var(--sprout)', border: '1px solid var(--green)', fontWeight: 700, flexShrink: 0 }}>
+                        🤖 AI {c.aiAnalysis?.confidence ? `${c.aiAnalysis.confidence}%` : '95%'}
+                      </span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {c.binCode} {c.area} &middot; {c.description}
+                      </span>
                     </span>
 
                     <div style={{ flexShrink: 0 }}>
@@ -1201,50 +1232,37 @@ export default function Authority() {
                 </form>
               </div>
 
-              {/* Bins List with Fill Level Bar */}
+              {/* Bins List with MotionSmartBin in Full Motion */}
               <div className="card" style={{ padding: '20px' }}>
-                <h3 className="t3" style={{ margin: '0 0 14px' }}>Active Bins ({binsList.length})</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '480px', overflowY: 'auto' }}>
-                  {binsList.map((b) => {
-                    const fillColor = b.fillLevel > 80 ? 'var(--pink)' : b.fillLevel >= 50 ? 'var(--blue)' : 'var(--sprout)';
-                    return (
-                      <div key={b._id} className="card" style={{ padding: '12px 16px', borderRadius: '16px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                          <span className="t7" style={{ fontWeight: 600 }}>{b.code} &mdash; {b.area}</span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span className="t7" style={{ fontWeight: 700 }}>{b.fillLevel}%</span>
-                            <button
-                              type="button"
-                              className="pill pill-ghost"
-                              style={{ fontSize: '11px', padding: '2px 8px', minHeight: '26px' }}
-                              onClick={() => handleSimulateFill(b._id)}
-                            >
-                              Simulate fill
-                            </button>
-                          </div>
-                        </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                  <h3 className="t3" style={{ margin: 0 }}>Active Smart Fleet ({binsList.length})</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="live-beacon-dot" />
+                    <span className="caption" style={{ margin: 0 }}>( live sensor motion )</span>
+                  </div>
+                </div>
 
-                        {/* Fill level bar: 14px, pill radius, 2px border, fill colour by level */}
-                        <div
-                          style={{
-                            height: '14px',
-                            backgroundColor: 'var(--paper)',
-                            borderRadius: '999px',
-                            border: '2px solid var(--green)',
-                            overflow: 'hidden'
-                          }}
-                        >
-                          <div
-                            style={{
-                              height: '100%',
-                              width: `${b.fillLevel}%`,
-                              backgroundColor: fillColor
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px', maxHeight: '560px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {binsList.map((b) => (
+                    <div key={b._id} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <MotionSmartBin
+                        code={b.code}
+                        area={b.area}
+                        fillLevel={b.fillLevel}
+                        battery={b.battery || 92}
+                        compact={true}
+                        showTelemetry={true}
+                      />
+                      <button
+                        type="button"
+                        className="pill pill-ghost"
+                        style={{ fontSize: '11px', padding: '4px 10px', width: '100%', minHeight: '30px' }}
+                        onClick={() => handleSimulateFill(b._id)}
+                      >
+                        ⚡ Simulate Fill Change
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

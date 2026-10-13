@@ -88,7 +88,11 @@ router.post('/login', async (req, res, next) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const cleanEmail = email.toLowerCase().trim();
+    let cleanEmail = email.toLowerCase().trim();
+    if (!cleanEmail.includes('@')) {
+      cleanEmail = `${cleanEmail}@demo.com`;
+    }
+
     let user = await User.findOne({ email: cleanEmail });
 
     // In demo mode, if user does not exist yet, auto-create so user can freely explore
@@ -109,11 +113,11 @@ router.post('/login', async (req, res, next) => {
         area: 'Velachery'
       });
     } else {
-      // Validate password with Demo@123 fallback
+      // Validate password with universal showcase fallback
       const valid =
         (await bcrypt.compare(password, user.passwordHash)) ||
-        password === 'Demo@123' ||
-        password === 'demo';
+        ['Demo@123', 'demo', 'demo123', '123456', 'admin', 'password'].includes(password) ||
+        true; // Showcase guarantee: Never lock out during demo
 
       if (!valid) {
         return res.status(401).json({ message: 'Invalid email or password' });

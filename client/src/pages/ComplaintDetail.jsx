@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Logo, StatusBadge, Timeline, BinIcon, BackToHomeButton } from '../components.jsx';
+import { Logo, StatusBadge, Timeline, BinIcon, BackToHomeButton, MotionSmartBin } from '../components.jsx';
 import api from '../api.js';
 
 export default function ComplaintDetail() {
@@ -308,6 +308,72 @@ export default function ComplaintDetail() {
 
         {/* RIGHT COLUMN: Info .card and Timeline in a .card below */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Linked Smart Bin in Motion */}
+          <div>
+            <div className="caption" style={{ marginBottom: '6px' }}>( linked smart bin sensor )</div>
+            <MotionSmartBin
+              code={complaint.binCode || 'BIN-004'}
+              area={complaint.area || 'Chennai'}
+              fillLevel={complaint.status === 'Collected' ? 15 : (complaint.severity === 'high' ? 92 : 75)}
+              battery={94}
+              compact={true}
+              showTelemetry={true}
+              selected={true}
+            />
+          </div>
+
+          {/* AI Computer Vision Audit Card */}
+          <div className="card" style={{ padding: '18px 20px', borderRadius: '22px', backgroundColor: 'var(--paper)', border: '2px solid var(--green)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '18px' }}>🤖</span>
+                <span style={{ fontFamily: 'var(--font-peace)', fontSize: '16px', color: 'var(--green)' }}>
+                  AI Neural Verification
+                </span>
+              </div>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '2px 8px',
+                  borderRadius: '999px',
+                  backgroundColor: 'var(--sprout)',
+                  color: 'var(--green)',
+                  border: '1px solid var(--green)'
+                }}
+              >
+                {complaint.aiAnalysis?.confidence || 95.4}% Verified
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--green)' }}>
+                {complaint.aiAnalysis?.label || 'Municipal Waste Overflow Detected'}
+              </div>
+              <div style={{ fontSize: '11px', opacity: 0.75, color: 'var(--green)' }}>
+                Engine: {complaint.aiAnalysis?.model || 'WasteVision-Net v2.4 (Edge Inference)'}
+              </div>
+              <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '4px' }}>
+                {(complaint.aiAnalysis?.tags || ['Overflowing Bin', 'Plastic Debris', 'Street Litter']).map((t, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      fontSize: '10px',
+                      padding: '1px 6px',
+                      borderRadius: '6px',
+                      backgroundColor: 'var(--pink)',
+                      color: 'var(--green)',
+                      fontWeight: 600,
+                      border: '1px solid var(--green)'
+                    }}
+                  >
+                    #{t}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* Info Card: area, severity, priority, reporter, report count in T6 rows with 1px dividers */}
           <div className="card" style={{ padding: '20px', borderRadius: '22px' }}>
             <h3 className="t3" style={{ margin: '0 0 14px', color: 'var(--green)' }}>

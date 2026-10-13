@@ -40,29 +40,107 @@ export const CHENNAI_AREAS = [
 // -------------------------------------------------------------
 export function BackToHomeButton({ label = 'Home', style = {} }) {
   const navigate = useNavigate();
+  const { user, switchRole } = useAuth();
+  const [switching, setSwitching] = useState(false);
+
+  const handleRole = async (targetRole) => {
+    try {
+      setSwitching(true);
+      await switchRole(targetRole);
+      navigate(`/${targetRole}`);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSwitching(false);
+    }
+  };
+
   return (
-    <button
-      type="button"
-      onClick={() => navigate('/')}
-      className="pill pill-ghost"
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '6px',
-        fontSize: '12px',
-        padding: '6px 14px',
-        cursor: 'pointer',
-        textDecoration: 'none',
-        ...style
-      }}
-      title="Return to Landing & Login Portal"
-    >
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-      <span>{label}</span>
-    </button>
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+      <button
+        type="button"
+        onClick={() => navigate('/')}
+        className="pill pill-ghost"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          fontSize: '12px',
+          padding: '6px 12px',
+          cursor: 'pointer',
+          textDecoration: 'none',
+          ...style
+        }}
+        title="Return to Landing & Login Portal"
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span>{label}</span>
+      </button>
+
+      {/* 1-Click Role Switcher for instant presentation showcase */}
+      <div className="demo-role-switcher" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+        <button
+          type="button"
+          disabled={switching || user?.role === 'citizen'}
+          onClick={() => handleRole('citizen')}
+          style={{
+            border: '1.5px solid var(--green)',
+            borderRadius: '999px',
+            backgroundColor: user?.role === 'citizen' ? 'var(--pink)' : 'var(--paper)',
+            color: 'var(--green)',
+            fontSize: '11px',
+            fontWeight: 700,
+            padding: '4px 8px',
+            cursor: user?.role === 'citizen' ? 'default' : 'pointer',
+            opacity: switching ? 0.6 : 1
+          }}
+          title="Switch instantly to Citizen (Report & Timeline)"
+        >
+          Citizen
+        </button>
+        <button
+          type="button"
+          disabled={switching || user?.role === 'collector'}
+          onClick={() => handleRole('collector')}
+          style={{
+            border: '1.5px solid var(--green)',
+            borderRadius: '999px',
+            backgroundColor: user?.role === 'collector' ? 'var(--sprout)' : 'var(--paper)',
+            color: 'var(--green)',
+            fontSize: '11px',
+            fontWeight: 700,
+            padding: '4px 8px',
+            cursor: user?.role === 'collector' ? 'default' : 'pointer',
+            opacity: switching ? 0.6 : 1
+          }}
+          title="Switch instantly to Collector (Route & After-Photo)"
+        >
+          Collector
+        </button>
+        <button
+          type="button"
+          disabled={switching || user?.role === 'authority'}
+          onClick={() => handleRole('authority')}
+          style={{
+            border: '1.5px solid var(--green)',
+            borderRadius: '999px',
+            backgroundColor: user?.role === 'authority' ? 'var(--blue)' : 'var(--paper)',
+            color: 'var(--green)',
+            fontSize: '11px',
+            fontWeight: 700,
+            padding: '4px 8px',
+            cursor: user?.role === 'authority' ? 'default' : 'pointer',
+            opacity: switching ? 0.6 : 1
+          }}
+          title="Switch instantly to Authority (Dashboard & Radar)"
+        >
+          Authority
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -149,7 +227,8 @@ export function Logo({ variant = 'dark', iconHeight = 30, textSize = 22 }) {
 }
 
 // -------------------------------------------------------------
-// BIN HERO (Big Whimsical Flat Illustration Scene)
+// -------------------------------------------------------------
+// BIN HERO (Big Whimsical Flat Illustration Scene with Rich Motion)
 // -------------------------------------------------------------
 export function BinHero() {
   return (
@@ -182,58 +261,82 @@ export function BinHero() {
       {/* Paper White Sun Circle */}
       <circle cx="450" cy="140" r="45" fill="#f4f4e1" stroke="#294237" strokeWidth="2.5" />
 
-      {/* Floating Sprout & Pink Dots with subtle drift */}
+      {/* Floating Sprout & Pink Dots with drift */}
       <circle cx="80" cy="220" r="9" fill="#b6cc58" className="drifting-dot" />
       <circle cx="480" cy="380" r="11" fill="#b6cc58" className="drifting-dot-alt" />
       <circle cx="120" cy="140" r="6" fill="#b6cc58" className="drifting-dot" />
       <circle cx="430" cy="260" r="7" fill="#ffc2ef" className="drifting-dot-alt" />
+      <circle cx="410" cy="170" r="5" fill="#b6cc58" className="drifting-dot" />
 
-      {/* Leaf sprigs sprouting from lid */}
-      <ellipse cx="230" cy="240" rx="14" ry="24" transform="rotate(-35 230 240)" fill="#b6cc58" stroke="#294237" strokeWidth="2" />
-      <ellipse cx="240" cy="285" rx="12" ry="20" transform="rotate(-40 240 285)" fill="#b6cc58" stroke="#294237" strokeWidth="2" />
+      {/* Leaf sprigs sprouting from lid with wind sway motion */}
+      <g className="sprig-sway-left">
+        <ellipse cx="230" cy="240" rx="14" ry="24" transform="rotate(-35 230 240)" fill="#b6cc58" stroke="#294237" strokeWidth="2" />
+        <ellipse cx="240" cy="285" rx="12" ry="20" transform="rotate(-40 240 285)" fill="#b6cc58" stroke="#294237" strokeWidth="2" />
+      </g>
 
-      <ellipse cx="295" cy="220" rx="13" ry="23" transform="rotate(30 295 220)" fill="#ffc2ef" stroke="#294237" strokeWidth="2" />
-      <ellipse cx="305" cy="270" rx="12" ry="19" transform="rotate(40 305 270)" fill="#ffc2ef" stroke="#294237" strokeWidth="2" />
+      <g className="sprig-sway-right">
+        <ellipse cx="295" cy="220" rx="13" ry="23" transform="rotate(30 295 220)" fill="#ffc2ef" stroke="#294237" strokeWidth="2" />
+        <ellipse cx="305" cy="270" rx="12" ry="19" transform="rotate(40 305 270)" fill="#ffc2ef" stroke="#294237" strokeWidth="2" />
+      </g>
 
-      {/* Cute Green House Bin Character */}
-      <path
-        d="M175 350L190 560H350L365 350H175Z"
-        fill="#294237"
-        stroke="#294237"
-        strokeWidth="3"
-      />
+      {/* Cute Green House Bin Character with Breathing & Floating Motion */}
+      <g className="bin-motion-float">
+        {/* Bin Body */}
+        <path
+          d="M175 350L190 560H350L365 350H175Z"
+          fill="#294237"
+          stroke="#294237"
+          strokeWidth="3"
+        />
 
-      {/* Faint Stripes on Bin */}
-      <line x1="230" y1="365" x2="238" y2="545" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
-      <line x1="270" y1="365" x2="270" y2="545" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
-      <line x1="310" y1="365" x2="302" y2="545" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
+        {/* Faint Stripes on Bin */}
+        <line x1="230" y1="365" x2="238" y2="545" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
+        <line x1="270" y1="365" x2="270" y2="545" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
+        <line x1="310" y1="365" x2="302" y2="545" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
 
-      {/* Bin Smiling Face in Electric Pink */}
-      <circle cx="238" cy="425" r="9" fill="#ffc2ef" />
-      <circle cx="302" cy="425" r="9" fill="#ffc2ef" />
-      <path
-        d="M242 445 Q270 470 298 445"
-        fill="none"
-        stroke="#ffc2ef"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
+        {/* Bin Blinking Eyes */}
+        <g className="bin-eye-blink">
+          <circle cx="238" cy="425" r="9" fill="#ffc2ef" />
+          <circle cx="302" cy="425" r="9" fill="#ffc2ef" />
+          {/* Eye shine highlights */}
+          <circle cx="236" cy="423" r="3" fill="#ffffff" />
+          <circle cx="300" cy="423" r="3" fill="#ffffff" />
+        </g>
 
-      {/* Bin Lid */}
-      <path
-        d="M160 330H380C386 330 390 335 390 340V350H150V340C150 335 154 330 160 330Z"
-        fill="#294237"
-        stroke="#294237"
-        strokeWidth="3"
-      />
-      {/* Handle */}
-      <path
-        d="M240 330V315C240 310 245 306 250 306H290C295 306 300 310 300 315V330"
-        fill="none"
-        stroke="#294237"
-        strokeWidth="6"
-        strokeLinecap="round"
-      />
+        {/* Bin Smiling Face in Electric Pink */}
+        <path
+          d="M242 445 Q270 470 298 445"
+          fill="none"
+          stroke="#ffc2ef"
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+
+        {/* Rosy Cheeks */}
+        <ellipse cx="220" cy="435" rx="7" ry="4" fill="#ffc2ef" opacity="0.6" />
+        <ellipse cx="320" cy="435" rx="7" ry="4" fill="#ffc2ef" opacity="0.6" />
+
+        {/* Bin Lid */}
+        <path
+          d="M160 330H380C386 330 390 335 390 340V350H150V340C150 335 154 330 160 330Z"
+          fill="#294237"
+          stroke="#294237"
+          strokeWidth="3"
+        />
+
+        {/* Handle */}
+        <path
+          d="M240 330V315C240 310 245 306 250 306H290C295 306 300 310 300 315V330"
+          fill="none"
+          stroke="#294237"
+          strokeWidth="6"
+          strokeLinecap="round"
+        />
+
+        {/* IoT Smart Sensor Beacon with live radar ping */}
+        <circle cx="270" cy="306" r="6" fill="#ffc2ef" />
+        <circle cx="270" cy="306" r="14" fill="none" stroke="#ffc2ef" strokeWidth="2" className="sensor-ping-circle" />
+      </g>
 
       {/* Bottom Wavy Ribbons */}
       <path
@@ -257,14 +360,15 @@ export function FloatingHeroCard({
   code = 'BIN-004',
   statusText = 'collected',
   area = 'Velachery',
-  time = '2 min ago'
+  time = '2 min ago',
+  relative = false
 }) {
   return (
     <div
       style={{
-        position: 'absolute',
-        left: '24px',
-        top: '28px',
+        position: relative ? 'relative' : 'absolute',
+        left: relative ? 'auto' : '24px',
+        top: relative ? 'auto' : '28px',
         background: 'var(--paper)',
         border: '2px solid var(--green)',
         borderRadius: '22px',
@@ -272,9 +376,10 @@ export function FloatingHeroCard({
         display: 'flex',
         gap: '12px',
         alignItems: 'center',
-        zIndex: 10
+        zIndex: 10,
+        boxShadow: '0 6px 18px rgba(41, 66, 55, 0.12)'
       }}
-      className="t7"
+      className="t7 interactive-hover-lift"
     >
       <div
         style={{
@@ -295,7 +400,7 @@ export function FloatingHeroCard({
         </svg>
       </div>
       <div>
-        <div style={{ fontFamily: 'Geologica', fontWeight: 500, fontSize: '14px', color: 'var(--green)' }}>
+        <div style={{ fontFamily: 'Geologica', fontWeight: 600, fontSize: '14px', color: 'var(--green)' }}>
           {code} {statusText}
         </div>
         <div style={{ fontSize: '12px', color: 'var(--green)', opacity: 0.75 }}>
@@ -306,29 +411,34 @@ export function FloatingHeroCard({
   );
 }
 
-export function FloatingHeroPill({ text = 'Live timeline on every report' }) {
+export function FloatingHeroPill({ text = 'Live timeline on every report', relative = false }) {
   return (
     <div
       style={{
-        position: 'absolute',
-        right: '24px',
-        bottom: '72px',
+        position: relative ? 'relative' : 'absolute',
+        right: relative ? 'auto' : '24px',
+        bottom: relative ? 'auto' : '24px',
         background: 'var(--green)',
         color: 'var(--paper)',
         borderRadius: '999px',
         padding: '10px 18px',
         border: '2px solid var(--green)',
-        zIndex: 10
+        zIndex: 10,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px',
+        boxShadow: '0 4px 14px rgba(41, 66, 55, 0.15)'
       }}
       className="t7"
     >
-      {text}
+      <span className="live-beacon-dot" />
+      <span>{text}</span>
     </div>
   );
 }
 
 // -------------------------------------------------------------
-// BIN MINI (Matching Citizen Hero band mockup at 300 x 205 px)
+// BIN MINI (Matching Citizen Hero band mockup with Live Motion)
 // -------------------------------------------------------------
 export function BinMini({ width = 300, height = 205 }) {
   return (
@@ -349,34 +459,217 @@ export function BinMini({ width = 300, height = 205 }) {
         strokeWidth="2.5"
       />
       {/* Floating White Dots */}
-      <circle cx="55" cy="90" r="9" fill="#f4f4e1" />
-      <circle cx="245" cy="100" r="10" fill="#f4f4e1" />
+      <circle cx="55" cy="90" r="9" fill="#f4f4e1" className="drifting-dot" />
+      <circle cx="245" cy="100" r="10" fill="#f4f4e1" className="drifting-dot-alt" />
+      <circle cx="45" cy="140" r="5" fill="#f4f4e1" className="drifting-dot" />
 
-      {/* Sprigs from lid */}
-      <ellipse cx="135" cy="52" rx="9" ry="16" transform="rotate(-28 135 52)" fill="#b6cc58" stroke="#294237" strokeWidth="2" />
-      <ellipse cx="165" cy="52" rx="9" ry="16" transform="rotate(28 165 52)" fill="#acc6c1" stroke="#294237" strokeWidth="2" />
+      {/* Sprigs from lid with breeze sway */}
+      <g className="mini-sprig-left">
+        <ellipse cx="135" cy="52" rx="9" ry="16" transform="rotate(-28 135 52)" fill="#b6cc58" stroke="#294237" strokeWidth="2" />
+      </g>
+      <g className="mini-sprig-right">
+        <ellipse cx="165" cy="52" rx="9" ry="16" transform="rotate(28 165 52)" fill="#acc6c1" stroke="#294237" strokeWidth="2" />
+      </g>
 
-      {/* Cute Bin Character Body */}
-      <path d="M95 100L102 205H198L205 100H95Z" fill="#294237" stroke="#294237" strokeWidth="3" />
-      {/* Faint vertical stripes */}
-      <line x1="126" y1="110" x2="130" y2="198" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
-      <line x1="150" y1="110" x2="150" y2="198" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
-      <line x1="174" y1="110" x2="170" y2="198" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
-      {/* Eyes & Smile */}
-      <circle cx="130" cy="144" r="6" fill="#ffc2ef" />
-      <circle cx="170" cy="144" r="6" fill="#ffc2ef" />
-      <path d="M134 158 Q150 172 166 158" fill="none" stroke="#ffc2ef" strokeWidth="3.5" strokeLinecap="round" />
-      {/* Lid */}
-      <rect x="85" y="88" width="130" height="13" rx="4" fill="#294237" stroke="#294237" strokeWidth="2.5" />
-      {/* Handle */}
-      <path d="M132 88V78C132 75 135 72 138 72H162C165 72 168 75 168 78V88" fill="none" stroke="#294237" strokeWidth="4" strokeLinecap="round" />
+      {/* Cute Bin Character Body with Floating & Breathing Motion */}
+      <g className="bin-motion-float">
+        <path d="M95 100L102 205H198L205 100H95Z" fill="#294237" stroke="#294237" strokeWidth="3" />
+        {/* Faint vertical stripes */}
+        <line x1="126" y1="110" x2="130" y2="198" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
+        <line x1="150" y1="110" x2="150" y2="198" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
+        <line x1="174" y1="110" x2="170" y2="198" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
+        {/* Eyes & Smile */}
+        <g className="bin-eye-blink">
+          <circle cx="130" cy="144" r="6" fill="#ffc2ef" />
+          <circle cx="170" cy="144" r="6" fill="#ffc2ef" />
+          <circle cx="128" cy="142" r="2" fill="#ffffff" />
+          <circle cx="168" cy="142" r="2" fill="#ffffff" />
+        </g>
+        <path d="M134 158 Q150 172 166 158" fill="none" stroke="#ffc2ef" strokeWidth="3.5" strokeLinecap="round" />
+        {/* Rosy Cheeks */}
+        <circle cx="118" cy="150" r="4.5" fill="#ffc2ef" opacity="0.6" />
+        <circle cx="182" cy="150" r="4.5" fill="#ffc2ef" opacity="0.6" />
+        {/* Lid */}
+        <rect x="85" y="88" width="130" height="13" rx="4" fill="#294237" stroke="#294237" strokeWidth="2.5" />
+        {/* Handle */}
+        <path d="M132 88V78C132 75 135 72 138 72H162C165 72 168 75 168 78V88" fill="none" stroke="#294237" strokeWidth="4" strokeLinecap="round" />
+
+        {/* Smart Sensor Beacon on Handle */}
+        <circle cx="150" cy="74" r="4" fill="#b6cc58" />
+        <circle cx="150" cy="74" r="9" fill="none" stroke="#b6cc58" strokeWidth="1.8" className="sensor-ping-circle" />
+      </g>
     </svg>
   );
 }
 export const CitizenBinHero = BinMini;
 
 // -------------------------------------------------------------
-// TRUCK (Small Flat Collection Truck: 200 x 77 desktop / 120 x 46 mobile)
+// MOTION SMART BIN (Interactive Animated Bin Gauge with Waving Fill & Sensor Telemetry)
+// -------------------------------------------------------------
+export function MotionSmartBin({
+  fillLevel = 75,
+  code = 'BIN-004',
+  area = 'Velachery',
+  battery = 92,
+  compact = false,
+  showTelemetry = true,
+  onClick = null,
+  selected = false
+}) {
+  const isCritical = fillLevel > 80;
+  const isMedium = fillLevel >= 50 && fillLevel <= 80;
+  const fillColor = isCritical ? 'var(--pink)' : isMedium ? 'var(--blue)' : 'var(--sprout)';
+  const statusLabel = isCritical ? 'Critical Overflow' : isMedium ? 'Moderate Fill' : 'Optimal Capacity';
+
+  // Calculate fill height (from bottom of bin, body height is approx 110px)
+  const clampedFill = Math.min(100, Math.max(5, fillLevel));
+  const fillHeight = (clampedFill / 100) * 110;
+  const fillY = 150 - fillHeight;
+
+  return (
+    <div
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      className={`interactive-hover-lift ${selected ? 'selected' : ''}`}
+      style={{
+        backgroundColor: 'var(--paper)',
+        border: selected ? '2.5px solid var(--green)' : '2px solid var(--green)',
+        borderRadius: compact ? '16px' : '22px',
+        padding: compact ? '12px 14px' : '18px 20px',
+        display: 'flex',
+        flexDirection: compact ? 'row' : 'column',
+        alignItems: 'center',
+        gap: compact ? '14px' : '12px',
+        cursor: onClick ? 'pointer' : 'default',
+        position: 'relative',
+        boxShadow: selected ? '0 0 0 3px rgba(41, 66, 55, 0.15)' : 'none',
+        transition: 'all 0.2s ease',
+        boxSizing: 'border-box'
+      }}
+    >
+      {/* Bin Animated Graphic */}
+      <div style={{ position: 'relative', width: compact ? '70px' : '110px', height: compact ? '80px' : '130px', flexShrink: 0 }}>
+        <svg
+          viewBox="0 0 140 160"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ width: '100%', height: '100%', overflow: 'visible' }}
+        >
+          <defs>
+            {/* Bin interior clip path */}
+            <clipPath id={`bin-clip-${code}`}>
+              <path d="M28 42 L38 148 H102 L112 42 Z" />
+            </clipPath>
+          </defs>
+
+          {/* Sonar ultrasonic beams pulsing down */}
+          <g className="sonar-beam-pulse">
+            <path d="M50 38 Q70 52 90 38" stroke={isCritical ? 'var(--pink)' : 'var(--blue)'} strokeWidth="2" strokeDasharray="3 3" fill="none" opacity="0.8" />
+            <path d="M42 48 Q70 66 98 48" stroke={isCritical ? 'var(--pink)' : 'var(--blue)'} strokeWidth="1.8" strokeDasharray="3 3" fill="none" opacity="0.6" />
+          </g>
+
+          {/* Outer Bin Housing Background */}
+          <path d="M28 42 L38 148 H102 L112 42 Z" fill="#ffffff" stroke="var(--green)" strokeWidth="3" />
+
+          {/* Waving Fill Level inside Clip */}
+          <g clipPath={`url(#bin-clip-${code})`}>
+            {/* Liquid Fill Body */}
+            <rect x="20" y={fillY + 8} width="100" height="150" fill={fillColor} />
+
+            {/* Flowing Wave Motion Header */}
+            <g className="wave-fill-motion" style={{ transform: `translateY(${fillY}px)` }}>
+              <path
+                d="M-100 8 Q-75 0 -50 8 T0 8 T50 8 T100 8 T150 8 T200 8 T250 8 V40 H-100 Z"
+                fill={fillColor}
+              />
+              <path
+                d="M-100 10 Q-75 3 -50 10 T0 10 T50 10 T100 10 T150 10 T200 10 T250 10"
+                stroke="var(--green)"
+                strokeWidth="1.8"
+                fill="none"
+              />
+            </g>
+          </g>
+
+          {/* Level Markers on bin front */}
+          <line x1="38" y1="70" x2="48" y2="70" stroke="var(--green)" strokeWidth="1.5" opacity="0.4" />
+          <line x1="36" y1="95" x2="46" y2="95" stroke="var(--green)" strokeWidth="1.5" opacity="0.4" />
+          <line x1="34" y1="120" x2="44" y2="120" stroke="var(--green)" strokeWidth="1.5" opacity="0.4" />
+
+          {/* Exterior Frame border */}
+          <path d="M28 42 L38 148 H102 L112 42 Z" fill="none" stroke="var(--green)" strokeWidth="3" />
+
+          {/* Bin Lid */}
+          <g className="bin-motion-breathe">
+            <rect x="20" y="32" width="100" height="11" rx="4" fill="var(--green)" stroke="var(--green)" strokeWidth="2" />
+            <path d="M54 32 V23 C54 20 57 18 60 18 H80 C83 18 86 20 86 23 V32" fill="none" stroke="var(--green)" strokeWidth="3.5" strokeLinecap="round" />
+
+            {/* Smart Ultrasonic Sensor on Lid Handle */}
+            <circle cx="70" cy="18" r="4" fill={isCritical ? 'var(--pink)' : '#22c55e'} />
+            <circle cx="70" cy="18" r="9" fill="none" stroke={isCritical ? 'var(--pink)' : '#22c55e'} strokeWidth="1.5" className="sensor-ping-circle" />
+          </g>
+
+          {/* Percentage text badge in center */}
+          <rect x="48" y="86" width="44" height="20" rx="10" fill="var(--paper)" stroke="var(--green)" strokeWidth="1.8" />
+          <text x="70" y="100" textAnchor="middle" fill="var(--green)" fontSize="11" fontWeight="800" fontFamily="Geologica">
+            {fillLevel}%
+          </text>
+        </svg>
+      </div>
+
+      {/* Telemetry & Info */}
+      <div style={{ flex: 1, minWidth: 0, textAlign: compact ? 'left' : 'center', width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: compact ? 'flex-start' : 'center', gap: '6px' }}>
+          <span style={{ fontFamily: 'var(--font-peace)', fontSize: compact ? '16px' : '18px', color: 'var(--green)' }}>
+            {code}
+          </span>
+          <span className={`live-beacon-dot ${isCritical ? 'pink' : ''}`} />
+        </div>
+
+        <div className="t7" style={{ color: 'var(--green)', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {area}
+        </div>
+
+        {showTelemetry && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: compact ? 'flex-start' : 'center', gap: '8px', marginTop: '6px', flexWrap: 'wrap' }}>
+            <span
+              className="status-badge"
+              style={{
+                backgroundColor: fillColor,
+                fontSize: '10.5px',
+                padding: '2px 8px',
+                border: '1.5px solid var(--green)'
+              }}
+            >
+              {statusLabel}
+            </span>
+
+            <span
+              title={`Battery: ${battery}%`}
+              style={{
+                fontSize: '11px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '3px',
+                color: 'var(--green)',
+                fontWeight: 600,
+                backgroundColor: 'rgba(41, 66, 55, 0.08)',
+                padding: '2px 6px',
+                borderRadius: '999px'
+              }}
+            >
+              <span>⚡</span> {battery}%
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// -------------------------------------------------------------
+// TRUCK (Small Flat Collection Truck with Driving Suspension Bounce & Rotating Wheels)
 // -------------------------------------------------------------
 export function Truck({ width = 200, height = 77, className = '' }) {
   return (
@@ -387,24 +680,49 @@ export function Truck({ width = 200, height = 77, className = '' }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       style={{ display: 'block', flexShrink: 0, marginBottom: '-2px' }}
-      className={className}
+      className={`truck-driving-bounce ${className}`}
     >
+      {/* Exhaust puff emission */}
+      <g className="drifting-dot" opacity="0.6">
+        <circle cx="2" cy="50" r="3" fill="#acc6c1" />
+        <circle cx="-6" cy="46" r="4.5" fill="#acc6c1" />
+      </g>
+
       {/* Cargo Body in Green House */}
       <rect x="4" y="8" width="118" height="46" rx="8" fill="#294237" stroke="#294237" strokeWidth="2.5" />
       {/* Sprout stripe on cargo */}
       <line x1="20" y1="18" x2="100" y2="18" stroke="#b6cc58" strokeWidth="3.5" strokeLinecap="round" />
       <circle cx="60" cy="32" r="10" fill="#acc6c1" />
+
+      {/* "SMART COLLECT" mini text on side */}
+      <text x="60" y="35" textAnchor="middle" fill="#294237" fontSize="5" fontWeight="800" fontFamily="sans-serif">
+        CLEAN
+      </text>
+
       {/* Cab in Sprout Green */}
       <path d="M122 22H160L180 40V54H122V22Z" fill="#b6cc58" stroke="#294237" strokeWidth="2.5" />
       {/* Cab Window in Paper White */}
       <path d="M128 26H155L170 40H128V26Z" fill="#f4f4e1" stroke="#294237" strokeWidth="2" />
-      {/* Headlight */}
+      {/* Headlight with glow */}
       <circle cx="174" cy="47" r="4" fill="#ffc2ef" stroke="#294237" strokeWidth="1.5" />
-      {/* Wheels */}
-      <circle cx="42" cy="57" r="14" fill="#294237" stroke="#f4f4e1" strokeWidth="3.5" />
-      <circle cx="42" cy="57" r="4.5" fill="#f4f4e1" />
-      <circle cx="145" cy="57" r="14" fill="#294237" stroke="#f4f4e1" strokeWidth="3.5" />
-      <circle cx="145" cy="57" r="4.5" fill="#f4f4e1" />
+      <path d="M178 47 L194 40 L194 54 Z" fill="#ffc2ef" opacity="0.4" />
+
+      {/* Front & Rear Wheels with Live Rotating Spokes */}
+      {/* Rear Wheel */}
+      <g className="wheel-spinning" style={{ transformOrigin: '42px 57px' }}>
+        <circle cx="42" cy="57" r="14" fill="#294237" stroke="#f4f4e1" strokeWidth="3.5" />
+        <circle cx="42" cy="57" r="5" fill="#f4f4e1" />
+        <line x1="42" y1="46" x2="42" y2="68" stroke="#f4f4e1" strokeWidth="1.5" />
+        <line x1="31" y1="57" x2="53" y2="57" stroke="#f4f4e1" strokeWidth="1.5" />
+      </g>
+
+      {/* Front Wheel */}
+      <g className="wheel-spinning" style={{ transformOrigin: '145px 57px' }}>
+        <circle cx="145" cy="57" r="14" fill="#294237" stroke="#f4f4e1" strokeWidth="3.5" />
+        <circle cx="145" cy="57" r="5" fill="#f4f4e1" />
+        <line x1="145" y1="46" x2="145" y2="68" stroke="#f4f4e1" strokeWidth="1.5" />
+        <line x1="134" y1="57" x2="156" y2="57" stroke="#f4f4e1" strokeWidth="1.5" />
+      </g>
     </svg>
   );
 }

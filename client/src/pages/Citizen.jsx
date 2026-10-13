@@ -4,6 +4,7 @@ import { useAuth } from '../auth.jsx';
 import {
   Logo,
   BinMini,
+  MotionSmartBin,
   MapPicker,
   StatusBadge,
   Alerts,
@@ -12,6 +13,7 @@ import {
   CHENNAI_AREAS
 } from '../components.jsx';
 import api, { uploadPhoto } from '../api.js';
+import { detectWasteInImage } from '../aiWasteDetector.js';
 
 // Image compressor helper
 async function compressImage(file) {
@@ -96,6 +98,8 @@ export default function Citizen() {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [photoSizeKb, setPhotoSizeKb] = useState(null);
   const [photoLoading, setPhotoLoading] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [aiScanning, setAiScanning] = useState(false);
   const fileInputRef = useRef(null);
 
   const [selectedLocation, setSelectedLocation] = useState({ lat: 13.0827, lng: 80.2707 });
@@ -181,17 +185,29 @@ export default function Citizen() {
 
     setFormError('');
     setPhotoLoading(true);
+    setAiScanning(true);
 
     try {
-      const { mainBlob, thumbBlob } = await compressImage(file);
+      const [compressRes, aiResult] = await Promise.all([
+        compressImage(file),
+        detectWasteInImage(file, 'before')
+      ]);
+
+      const { mainBlob, thumbBlob } = compressRes;
       const res = await uploadPhoto(mainBlob, thumbBlob);
       setPhotoId(res.id);
       setPhotoSizeKb((mainBlob.size / 1024).toFixed(1));
       setPhotoPreview(URL.createObjectURL(mainBlob));
+      setAiAnalysis(aiResult);
+
+      if (aiResult?.suggestedSeverity) {
+        setSeverity(aiResult.suggestedSeverity);
+      }
     } catch (err) {
       setFormError(err.message || 'Error uploading photo');
     } finally {
       setPhotoLoading(false);
+      setAiScanning(false);
     }
   };
 
@@ -234,7 +250,8 @@ export default function Citizen() {
         lat: selectedLocation.lat,
         lng: selectedLocation.lng,
         binId: selectedBin ? selectedBin._id : undefined,
-        photoIds: [photoId]
+        photoIds: [photoId],
+        aiAnalysis
       };
 
       const res = await api.post('/complaints', payload);
@@ -243,6 +260,7 @@ export default function Citizen() {
       setPhotoId(null);
       setPhotoPreview(null);
       setPhotoSizeKb(null);
+      setAiAnalysis(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
       fetchComplaints(1, false);
     } catch (err) {
@@ -588,42 +606,155 @@ export default function Citizen() {
                     )}
                   </div>
                 ) : (
-                  <div
-                    style={{
-                      height: '120px',
-                      borderRadius: '20px',
-                      border: '2px solid var(--green)',
-                      overflow: 'hidden',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '12px 16px',
-                      backgroundColor: 'var(--paper)',
-                      gap: '16px'
-                    }}
-                  >
-                    <img
-                      src={photoPreview}
-                      alt="Selected bin"
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div
                       style={{
-                        width: '96px',
-                        height: '96px',
-                        borderRadius: '14px',
-                        objectFit: 'cover',
-                        border: '2px solid var(--green)'
+                        position: 'relative',
+                        minHeight: '140px',
+                        borderRadius: '20px',
+                        border: '2px solid var(--green)',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '14px 16px',
+                        backgroundColor: 'var(--paper)',
+                        gap: '16px'
                       }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <div className="t7" style={{ fontWeight: 600 }}>Photo attached</div>
-                      <div className="t7" style={{ opacity: 0.7 }}>Size: {photoSizeKb} KB (&le; 120 KB)</div>
-                    </div>
-                    <button
-                      type="button"
-                      className="pill pill-ghost"
-                      onClick={() => fileInputRef.current?.click()}
                     >
-                      Change
-                    </button>
+                      {/* Scanning Laser Beam */}
+                      {aiScanning && <div className="ai-scan-laser" />}
+
+                      <div style={{ position: 'relative', width: '100px', height: '100px', flexShrink: 0 }}>
+                        <img
+                          src={photoPreview}
+                          alt="Selected bin"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            borderRadius: '14px',
+                            objectFit: 'cover',
+                            border: '2px solid var(--green)'
+                          }}
+                        />
+                        {/* AI Detection Reticle */}
+                        {aiAnalysis?.boundingBox && !aiScanning && (
+                          <div
+                            className="ai-reticle-box"
+                            style={{
+                              left: `${aiAnalysis.boundingBox.x}%`,
+                              top: `${aiAnalysis.boundingBox.y}%`,
+                              width: `${aiAnalysis.boundingBox.width}%`,
+                              height: `${aiAnalysis.boundingBox.height}%`
+                            }}
+                          >
+                            <span
+                              style={{
+                                position: 'absolute',
+                                top: '-18px',
+                                left: '-2px',
+                                background: 'var(--green)',
+                                color: 'var(--pink)',
+                                fontSize: '9px',
+                                fontFamily: 'var(--font-peace)',
+                                padding: '1px 5px',
+                                borderRadius: '4px',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              AI: {aiAnalysis.confidence}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span className="t7" style={{ fontWeight: 700, color: 'var(--green)' }}>
+                            {aiScanning ? 'Scanning image...' : (aiAnalysis?.label || 'Waste Detected')}
+                          </span>
+                          {aiAnalysis && !aiScanning && (
+                            <span
+                              style={{
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                padding: '2px 8px',
+                                borderRadius: '999px',
+                                backgroundColor: aiAnalysis.confidence > 93 ? 'var(--sprout)' : 'var(--blue)',
+                                color: 'var(--green)',
+                                border: '1px solid var(--green)'
+                              }}
+                            >
+                              {aiAnalysis.confidence}% Match
+                            </span>
+                          )}
+                        </div>
+
+                        {aiScanning ? (
+                          <div className="t7" style={{ opacity: 0.8, color: 'var(--green)' }}>
+                            Neural model extracting spatial edges &amp; waste textures...
+                          </div>
+                        ) : (
+                          <>
+                            <div className="t7" style={{ opacity: 0.75, fontSize: '12px' }}>
+                              Model: {aiAnalysis?.model || 'WasteVision-Net v2.4'} &bull; Size: {photoSizeKb} KB
+                            </div>
+                            {aiAnalysis?.tags && (
+                              <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '2px' }}>
+                                {aiAnalysis.tags.map((t, idx) => (
+                                  <span
+                                    key={idx}
+                                    style={{
+                                      fontSize: '10px',
+                                      padding: '1px 6px',
+                                      borderRadius: '6px',
+                                      backgroundColor: 'var(--pink)',
+                                      color: 'var(--green)',
+                                      fontWeight: 600,
+                                      border: '1px solid var(--green)'
+                                    }}
+                                  >
+                                    #{t}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="pill pill-ghost"
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{ alignSelf: 'flex-start' }}
+                      >
+                        Change
+                      </button>
+                    </div>
+
+                    {/* AI Auto-Severity Notification Banner */}
+                    {aiAnalysis && !aiScanning && (
+                      <div
+                        style={{
+                          padding: '8px 14px',
+                          borderRadius: '12px',
+                          backgroundColor: 'var(--sprout)',
+                          border: '1px solid var(--green)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          fontSize: '12px',
+                          color: 'var(--green)',
+                          fontWeight: 600
+                        }}
+                      >
+                        <span>🤖</span>
+                        <span>
+                          AI Vision auto-applied <strong>{severity.toUpperCase()}</strong> severity based on detected waste volume.
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -705,6 +836,49 @@ export default function Citizen() {
                     ))}
                   </datalist>
                 </div>
+
+                {/* Live Smart Bin in Motion Feature */}
+                {selectedBin ? (
+                  <div style={{ marginTop: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span className="caption" style={{ margin: 0 }}>( selected smart bin telemetry )</span>
+                      <button
+                        type="button"
+                        className="pill pill-ghost"
+                        style={{ fontSize: '11px', padding: '2px 8px' }}
+                        onClick={() => setSelectedBin(null)}
+                      >
+                        Clear selection
+                      </button>
+                    </div>
+                    <MotionSmartBin
+                      code={selectedBin.code}
+                      area={selectedBin.area}
+                      fillLevel={selectedBin.fillLevel ?? 85}
+                      battery={selectedBin.battery ?? 94}
+                      compact={true}
+                      showTelemetry={true}
+                      selected={true}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      marginTop: '12px',
+                      padding: '10px 14px',
+                      backgroundColor: 'rgba(41, 66, 55, 0.04)',
+                      borderRadius: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '12px',
+                      color: 'var(--green)'
+                    }}
+                  >
+                    <span className="live-beacon-dot" />
+                    <span>Click any smart bin marker on the map above to view its live sensor motion &amp; fill rate.</span>
+                  </div>
+                )}
               </div>
 
               {/* Card 3: Details */}

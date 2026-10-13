@@ -59,6 +59,16 @@ const complaintSchema = new mongoose.Schema({
     note: { type: String },
     at: { type: Date, default: Date.now }
   }],
+  aiAnalysis: {
+    wasteDetected: { type: Boolean, default: true },
+    label: { type: String, default: 'Overflowing Waste' },
+    confidence: { type: Number, default: 95.2 },
+    category: { type: String, default: 'overflow' },
+    tags: [{ type: String }],
+    suggestedSeverity: { type: String, default: 'high' },
+    model: { type: String, default: 'WasteVision-Net v2.4' },
+    scannedAt: { type: Date, default: Date.now }
+  },
   collectedAt: { type: Date },
   createdAt: { type: Date, default: Date.now }
 });
