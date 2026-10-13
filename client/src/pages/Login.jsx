@@ -191,8 +191,8 @@ export default function Login() {
             style={{
               fontFamily: 'var(--font-script)',
               color: 'var(--blue)',
-              fontSize: 'clamp(16px, 1.6vw, 22px)',
-              marginBottom: '6px'
+              fontSize: 'clamp(14px, 1.4vw, 20px)',
+              marginBottom: '4px'
             }}
           >
             spot it, report it, watch it clear
@@ -202,7 +202,7 @@ export default function Login() {
           <h1
             style={{
               fontFamily: 'var(--font-peace)',
-              fontSize: 'clamp(32px, 4vw, 54px)',
+              fontSize: 'clamp(28px, 3.4vw, 44px)',
               lineHeight: 1.05,
               color: 'var(--pink)',
               margin: '0 0 2px',
@@ -216,7 +216,7 @@ export default function Login() {
           <div
             style={{
               fontFamily: 'var(--font-peace)',
-              fontSize: 'clamp(30px, 3.6vw, 48px)',
+              fontSize: 'clamp(26px, 3.1vw, 40px)',
               lineHeight: 1.05,
               color: 'var(--paper)',
               margin: '0 0 4px',
@@ -227,18 +227,18 @@ export default function Login() {
           </div>
 
           {/* Green wave squiggle decoration under title */}
-          <svg width="200" height="12" viewBox="0 0 200 12" fill="none" style={{ display: 'block', margin: '0 0 16px' }}>
+          <svg width="170" height="10" viewBox="0 0 200 12" fill="none" style={{ display: 'block', margin: '0 0 10px' }}>
             <path d="M2 6 Q14 0 26 6 T50 6 T74 6 T98 6 T122 6 T146 6 T170 6 T194 6" stroke="var(--sprout)" strokeWidth="3.5" strokeLinecap="round" />
           </svg>
 
           {/* Description */}
           <p
             style={{
-              fontSize: 'clamp(14px, 1.1vw, 16px)',
-              lineHeight: 1.5,
-              maxWidth: '440px',
+              fontSize: 'clamp(13px, 1vw, 15px)',
+              lineHeight: 1.45,
+              maxWidth: '420px',
               opacity: 0.9,
-              margin: '0 0 22px',
+              margin: '0 0 14px',
               color: 'var(--paper)'
             }}
           >
@@ -250,9 +250,9 @@ export default function Login() {
             id="auth-card"
             style={{
               backgroundColor: 'var(--paper)',
-              borderRadius: '22px',
+              borderRadius: '20px',
               border: '2px solid var(--green)',
-              padding: '18px 22px',
+              padding: '14px 18px',
               maxWidth: '420px',
               width: '100%',
               boxSizing: 'border-box'
@@ -340,7 +340,7 @@ export default function Login() {
                   style={{
                     flex: 1,
                     minWidth: '140px',
-                    height: '44px',
+                    height: '40px',
                     padding: '0 16px',
                     fontSize: '13px',
                     borderRadius: '999px',
@@ -359,7 +359,7 @@ export default function Login() {
                   style={{
                     flex: 1,
                     minWidth: '120px',
-                    height: '44px',
+                    height: '40px',
                     padding: '0 16px',
                     fontSize: '13px',
                     borderRadius: '999px',
@@ -376,13 +376,13 @@ export default function Login() {
                 disabled={loading}
                 style={{
                   width: '100%',
-                  height: '46px',
+                  height: '42px',
                   backgroundColor: 'var(--pink)',
                   border: '2px solid var(--green)',
                   borderRadius: '999px',
                   color: 'var(--green)',
                   fontFamily: 'var(--font-peace)',
-                  fontSize: '15px',
+                  fontSize: '14px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -436,16 +436,23 @@ export default function Login() {
 
         {/* RIGHT COLUMN (Electric Pink #ffc2ef with exact illustration from demo) */}
         <div className="landing-hero-right">
-          {/* Circular Starburst Seal in Top-Left (REPORT • VERIFY • ASSIGN • COLL) */}
+          {/* Circular Starburst Seal in Top-Left (ROTATING CONTINUOUS STAMP) */}
           <div
             style={{
               position: 'absolute',
-              top: '20px',
-              left: '20px',
+              top: '16px',
+              left: '16px',
               zIndex: 10
             }}
           >
-            <svg width="95" height="95" viewBox="0 0 120 120" fill="none">
+            <svg
+              className="rotating-seal-badge"
+              width="88"
+              height="88"
+              viewBox="0 0 120 120"
+              fill="none"
+              style={{ display: 'block', filter: 'drop-shadow(0 2px 5px rgba(41,66,55,0.15))' }}
+            >
               {/* 16-lobed rosette seal in Sprout Green */}
               <path
                 d="M60 4 C64 4 67 9 71 10 C75 11 80 8 84 11 C88 14 88 19 92 23 C96 27 101 27 104 32 C107 36 104 41 106 46 C108 50 112 54 112 59 C112 64 107 67 106 72 C105 77 108 82 105 86 C102 90 97 90 93 94 C89 98 89 103 84 105 C80 107 76 104 71 106 C67 108 64 112 59 112 C54 112 51 107 46 106 C42 105 37 108 33 105 C29 102 29 97 25 93 C21 89 16 89 13 84 C10 80 13 75 11 71 C9 67 4 64 4 59 C4 54 9 51 10 46 C11 42 8 37 11 33 C14 29 19 29 23 25 C27 21 27 16 32 13 C36 10 41 13 46 11 C50 9 54 4 60 4 Z"
@@ -467,13 +474,12 @@ export default function Login() {
             </svg>
           </div>
 
-          {/* MAIN ILLUSTRATION: Blue Window + Cute Green Bin Character + Wavy Ribbons */}
-          {/* Absolutely NO Velachery badge per explicit user requirement */}
+          {/* MAIN ILLUSTRATION: Blue Window + Cute Green Bin Character (MEDIUM SIZED) + Wavy Ribbons */}
           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
             <svg
               viewBox="0 0 540 580"
               preserveAspectRatio="xMidYMax meet"
-              style={{ width: '100%', height: '100%', maxHeight: '540px', display: 'block' }}
+              style={{ width: '100%', height: '100%', maxHeight: '520px', display: 'block' }}
               xmlns="http://www.w3.org/2000/svg"
             >
               {/* Calming Blue Arch Window */}
@@ -495,37 +501,38 @@ export default function Login() {
               <circle cx="100" cy="380" r="7" fill="#294237" />
               <circle cx="440" cy="320" r="10" fill="#ffc2ef" />
 
-              {/* Cute Green House Bin Character sitting on window ledge */}
+              {/* Cute Green House Bin Character sitting on window ledge (PROPER MEDIUM SIZE: ~200px wide) */}
               <g className="bin-motion-float">
                 {/* 3 Leaves sprouting from bin lid with wind sway */}
-                <ellipse cx="255" cy="285" rx="9" ry="22" transform="rotate(-20 255 285)" fill="#b6cc58" stroke="#294237" strokeWidth="2" />
-                <ellipse cx="285" cy="275" rx="9" ry="22" transform="rotate(18 285 275)" fill="#ffc2ef" stroke="#294237" strokeWidth="2" />
-                <ellipse cx="270" cy="240" rx="8" ry="20" transform="rotate(4 270 240)" fill="#b6cc58" stroke="#294237" strokeWidth="2" />
+                <ellipse cx="246" cy="190" rx="14" ry="32" transform="rotate(-22 246 190)" fill="#b6cc58" stroke="#294237" strokeWidth="2.5" />
+                <ellipse cx="294" cy="180" rx="14" ry="32" transform="rotate(20 294 180)" fill="#ffc2ef" stroke="#294237" strokeWidth="2.5" />
+                <ellipse cx="270" cy="135" rx="12" ry="30" transform="rotate(4 270 135)" fill="#b6cc58" stroke="#294237" strokeWidth="2.5" />
+                <line x1="270" y1="200" x2="270" y2="252" stroke="#294237" strokeWidth="3.5" strokeLinecap="round" />
 
                 {/* Bin Lid & Handle */}
-                <path d="M210 354H330C335 354 338 358 338 362V370H202V362C202 358 205 354 210 354Z" fill="#294237" stroke="#294237" strokeWidth="2.5" />
-                <path d="M252 354V342C252 338 256 335 260 335H280C284 335 288 338 288 342V354" fill="none" stroke="#294237" strokeWidth="4.5" strokeLinecap="round" />
+                <path d="M154 278 H386 C392 278 396 282 396 288 V298 H144 V288 C144 282 148 278 154 278 Z" fill="#294237" stroke="#294237" strokeWidth="3" />
+                <path d="M245 278 V260 C245 254 250 250 256 250 H284 C290 250 295 254 295 260 V278" fill="none" stroke="#294237" strokeWidth="5" strokeLinecap="round" />
 
-                {/* Bin Body */}
-                <path d="M216 370L226 510H314L324 370H216Z" fill="#294237" stroke="#294237" strokeWidth="3" />
+                {/* Bin Body (Medium sized: ~200px wide, ~215px high) */}
+                <path d="M168 298 L184 512 H356 L372 298 Z" fill="#294237" stroke="#294237" strokeWidth="3.5" />
 
                 {/* Vertical stripes on bin */}
-                <line x1="244" y1="384" x2="249" y2="498" stroke="#f4f4e1" strokeWidth="2" opacity="0.3" />
-                <line x1="270" y1="384" x2="270" y2="498" stroke="#f4f4e1" strokeWidth="2" opacity="0.3" />
-                <line x1="296" y1="384" x2="291" y2="498" stroke="#f4f4e1" strokeWidth="2" opacity="0.3" />
+                <line x1="218" y1="316" x2="226" y2="496" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
+                <line x1="270" y1="316" x2="270" y2="496" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
+                <line x1="322" y1="316" x2="314" y2="496" stroke="#f4f4e1" strokeWidth="2.5" opacity="0.3" />
 
                 {/* Smiling Pink Face */}
                 <g className="bin-eye-blink">
-                  <circle cx="248" cy="430" r="6" fill="#ffc2ef" />
-                  <circle cx="292" cy="430" r="6" fill="#ffc2ef" />
-                  <circle cx="246" cy="428" r="2" fill="#ffffff" />
-                  <circle cx="290" cy="428" r="2" fill="#ffffff" />
+                  <circle cx="236" cy="385" r="9" fill="#ffc2ef" />
+                  <circle cx="304" cy="385" r="9" fill="#ffc2ef" />
+                  <circle cx="233" cy="382" r="3" fill="#ffffff" />
+                  <circle cx="301" cy="382" r="3" fill="#ffffff" />
                 </g>
-                <path d="M252 446 Q270 464 288 446" fill="none" stroke="#ffc2ef" strokeWidth="3.5" strokeLinecap="round" />
+                <path d="M242 410 Q270 435 298 410" fill="none" stroke="#ffc2ef" strokeWidth="4.5" strokeLinecap="round" />
 
                 {/* Rosy Cheeks */}
-                <circle cx="238" cy="438" r="4.5" fill="#ffc2ef" opacity="0.6" />
-                <circle cx="302" cy="438" r="4.5" fill="#ffc2ef" opacity="0.6" />
+                <circle cx="220" cy="396" r="7" fill="#ffc2ef" opacity="0.65" />
+                <circle cx="320" cy="396" r="7" fill="#ffc2ef" opacity="0.65" />
               </g>
 
               {/* Bottom Wavy Ribbons */}
