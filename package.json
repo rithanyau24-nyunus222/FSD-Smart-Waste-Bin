@@ -1,11 +1,14 @@
 {
   "name": "smart-waste-bin",
   "version": "1.0.0",
-  "private": true,
+  "type": "module",
   "scripts": {
     "build": "npm install --prefix server && npm install --prefix client && npm run build --prefix client",
     "start": "node server/index.js",
+    "dev": "node dev.js",
     "dev:server": "npm run dev --prefix server",
-    "dev:client": "npm run dev --prefix client"
+    "dev:client": "npm run dev --prefix client",
+    "tunnel": "npx -y localtunnel --port 5000 --open",
+    "view:db": "node server/view-db.js"
   }
 }

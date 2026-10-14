@@ -65,5 +65,16 @@ if (process.env.NODE_ENV === 'production' || fs.existsSync(clientDist)) {
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+  const url = `http://localhost:${PORT}`;
+  console.log(`\n======================================================`);
+  console.log(`🌿 SMART WASTE BIN SYSTEM — SERVER ONLINE`);
+  console.log(`======================================================`);
+  console.log(`➜  Local App:  ${url}   (Ctrl+Click to open)`);
+  console.log(`➜  Health API: ${url}/api/health`);
+  console.log(`======================================================\n`);
+
+  if (process.env.AUTO_OPEN !== 'false') {
+    const cmd = process.platform === 'win32' ? `start ${url}` : process.platform === 'darwin' ? `open ${url}` : `xdg-open ${url}`;
+    import('child_process').then(({ exec }) => exec(cmd).on('error', () => {}));
+  }
 });
