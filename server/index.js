@@ -58,7 +58,24 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true });
+  const dbState = mongoose.connection.readyState;
+  const states = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+  res.json({
+    ok: true,
+    database: states[dbState] || 'disconnected',
+    isDbConnected: dbState === 1
+  });
+});
+
+// Guard API routes if database is disconnected so requests fail fast with a helpful message
+app.use('/api', (req, res, next) => {
+  if (req.path === '/health') return next();
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      message: 'MongoDB is disconnected. Please configure a valid MONGODB_URI in your Render environment variables (and ensure 0.0.0.0/0 is allowed in Atlas Network Access).'
+    });
+  }
+  next();
 });
 
 import { fetchAllCollections, getInspectorHtml } from './db-inspector.js';
