@@ -18,18 +18,18 @@ export default function Login() {
   const [regRole, setRegRole] = useState('citizen');
   const [regArea, setRegArea] = useState('Mylapore');
 
-  // Quick 1-click role logins
+  // Quick official role logins
   const handleQuickDemo = async (role) => {
     setLoading(true);
     setError('');
     try {
       const creds = {
-        citizen: { email: 'citizen@demo.com', path: '/citizen' },
-        collector: { email: 'collector@demo.com', path: '/collector' },
-        authority: { email: 'authority@demo.com', path: '/authority' }
+        citizen: { email: 'rithanya@civic.chennai.in', path: '/citizen' },
+        collector: { email: 'ravi.kumar@smartwaste.gov.in', path: '/collector' },
+        authority: { email: 'admin@smartwaste.gov.in', path: '/authority' }
       }[role];
       if (creds) {
-        await login(creds.email, 'Demo@123');
+        await login(creds.email, 'CleanChennai@2026');
         navigate(creds.path);
       }
     } catch (err) {
@@ -403,9 +403,9 @@ export default function Login() {
                 )}
               </button>
 
-              {/* Subtle 1-click role testing links */}
+              {/* Instant Portal Sign-in options */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '6px' }}>
-                <span style={{ fontSize: '11px', color: 'var(--green)', opacity: 0.7 }}>1-click demo:</span>
+                <span style={{ fontSize: '11px', color: 'var(--green)', opacity: 0.7 }}>Quick Portal Sign-in:</span>
                 <button
                   type="button"
                   onClick={() => handleQuickDemo('citizen')}

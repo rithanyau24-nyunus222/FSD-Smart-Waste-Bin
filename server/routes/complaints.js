@@ -377,8 +377,8 @@ router.get('/complaints/:id', verifyToken, async (req, res, next) => {
 
     // Role access authorization check
     if (req.user.role === 'citizen') {
-      const isReporter = complaint.reporter && complaint.reporter._id.toString() === req.user.id;
-      const isFollower = complaint.followers && complaint.followers.some((f) => f._id.toString() === req.user.id);
+      const isReporter = complaint.reporter && complaint.reporter._id && complaint.reporter._id.toString() === req.user.id;
+      const isFollower = complaint.followers && complaint.followers.some((f) => f && f._id && f._id.toString() === req.user.id);
       if (!isReporter && !isFollower) {
         return res.status(403).json({ message: 'Forbidden: You can only view your own or followed complaints' });
       }

@@ -134,6 +134,10 @@ router.post('/tasks', verifyToken, requireRole('authority'), async (req, res, ne
       return res.status(400).json({ message: 'complaintId and collectorId are required' });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(complaintId) || !mongoose.Types.ObjectId.isValid(collectorId)) {
+      return res.status(400).json({ message: 'Invalid complaint ID or collector ID format' });
+    }
+
     const complaint = await Complaint.findById(complaintId);
     if (!complaint) {
       return res.status(404).json({ message: 'Complaint not found' });
@@ -216,6 +220,10 @@ router.get('/tasks', verifyToken, async (req, res, next) => {
 router.patch('/tasks/:id', verifyToken, requireRole('collector'), async (req, res, next) => {
   try {
     const { status, photoId } = req.body;
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid task ID format' });
+    }
+
     const task = await Task.findById(req.params.id);
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
@@ -325,14 +333,25 @@ router.patch('/tasks/:id', verifyToken, requireRole('collector'), async (req, re
 // GET /api/stats (authority only)
 router.get('/stats', verifyToken, requireRole('authority'), async (req, res, next) => {
   try {
-    const statuses = ['Pending', 'Verified', 'Assigned', 'In Progress', 'Collected', 'Rejected'];
-    const statusCounts = {};
+    const statusCounts = {
+      Pending: 0,
+      Verified: 0,
+      Assigned: 0,
+      'In Progress': 0,
+      Collected: 0,
+      Rejected: 0
+    };
 
-    for (const st of statuses) {
-      statusCounts[st] = await Complaint.countDocuments({ status: st });
+    const [statusAgg, total] = await Promise.all([
+      Complaint.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
+      Complaint.countDocuments()
+    ]);
+
+    for (const item of statusAgg) {
+      if (item._id && statusCounts[item._id] !== undefined) {
+        statusCounts[item._id] = item.count;
+      }
     }
-
-    const total = await Complaint.countDocuments();
 
     // Collected today
     const startOfToday = new Date();

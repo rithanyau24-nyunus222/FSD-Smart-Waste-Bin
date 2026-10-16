@@ -5,10 +5,12 @@
   "scripts": {
     "build": "npm install --prefix server && npm install --prefix client && npm run build --prefix client",
     "start": "node server/index.js",
+    "seed": "node server/seed.js",
     "dev": "node dev.js",
     "dev:server": "npm run dev --prefix server",
     "dev:client": "npm run dev --prefix client",
     "tunnel": "npx -y localtunnel --port 5000 --open",
-    "view:db": "node server/view-db.js"
+    "view:db": "node server/view-db.js",
+    "view:web": "node server/db-inspector.js"
   }
 }

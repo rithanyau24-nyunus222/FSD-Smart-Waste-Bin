@@ -23,7 +23,22 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/smart-
 // Database connection
 mongoose
   .connect(MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB:', MONGODB_URI))
+  .then(async () => {
+    console.log('Connected to MongoDB:', MONGODB_URI);
+    // In production or cloud deployments with a newly connected database, auto-seed if empty
+    try {
+      const { User } = await import('./models.js');
+      const userCount = await User.countDocuments();
+      if (userCount === 0) {
+        console.log('🌱 Fresh/empty database detected. Auto-populating initial dataset...');
+        const { seed } = await import('./seed.js');
+        await seed(false);
+        console.log('✅ Auto-seeding complete! Ready for live users.');
+      }
+    } catch (seedErr) {
+      console.warn('Initial seed verification notice:', seedErr.message);
+    }
+  })
   .catch((err) => console.error('MongoDB connection error:', err.message));
 
 // CORS header middleware
@@ -46,17 +61,32 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true });
 });
 
+import { fetchAllCollections, getInspectorHtml } from './db-inspector.js';
+
 // Central routers
 app.use('/api/auth', authRouter);
 app.use('/api', complaintsRouter);
 app.use('/api', workRouter);
+
+// Database Inspector Web UI
+app.get('/database', (req, res) => {
+  res.send(getInspectorHtml());
+});
+app.get('/api/db-explorer', async (req, res) => {
+  try {
+    const data = await fetchAllCollections();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Serve static assets in production or whenever client/dist is built
 const clientDist = path.join(__dirname, '../client/dist');
 if (process.env.NODE_ENV === 'production' || fs.existsSync(clientDist)) {
   app.use(express.static(clientDist));
   app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
+    if (req.path.startsWith('/api') || req.path === '/database') return next();
     res.sendFile(path.join(clientDist, 'index.html'));
   });
 }
@@ -70,10 +100,11 @@ app.listen(PORT, () => {
   console.log(`🌿 SMART WASTE BIN SYSTEM — SERVER ONLINE`);
   console.log(`======================================================`);
   console.log(`➜  Local App:  ${url}   (Ctrl+Click to open)`);
+  console.log(`➜  Live DB UI: ${url}/database (Interactive MongoDB Web Inspector)`);
   console.log(`➜  Health API: ${url}/api/health`);
   console.log(`======================================================\n`);
 
-  if (process.env.AUTO_OPEN !== 'false') {
+  if (process.env.AUTO_OPEN !== 'false' && process.env.NODE_ENV !== 'production' && !process.env.RENDER) {
     const cmd = process.platform === 'win32' ? `start ${url}` : process.platform === 'darwin' ? `open ${url}` : `xdg-open ${url}`;
     import('child_process').then(({ exec }) => exec(cmd).on('error', () => {}));
   }

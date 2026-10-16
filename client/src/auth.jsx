@@ -57,9 +57,9 @@ export function AuthProvider({ children }) {
 
   const switchRole = async (targetRole) => {
     const creds = {
-      citizen: { email: 'citizen@demo.com', password: 'Demo@123' },
-      collector: { email: 'collector@demo.com', password: 'Demo@123' },
-      authority: { email: 'authority@demo.com', password: 'Demo@123' }
+      citizen: { email: 'rithanya@civic.chennai.in', password: 'CleanChennai@2026' },
+      collector: { email: 'ravi.kumar@smartwaste.gov.in', password: 'CleanChennai@2026' },
+      authority: { email: 'admin@smartwaste.gov.in', password: 'CleanChennai@2026' }
     }[targetRole];
     if (!creds) return;
     return login(creds.email, creds.password);
