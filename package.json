@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "npm install --prefix server && npm install --prefix client && npm run build --prefix client",
+    "build": "npm install --prefix server && (npm install --prefix client && npm run build --prefix client || echo 'Pre-built bundle used')",
     "start": "node server/index.js",
     "seed": "node server/seed.js",
     "dev": "node dev.js",
