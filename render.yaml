@@ -1,7 +1,7 @@
 services:
   - type: web
     name: smart-waste-management
-    env: node
+    runtime: node
     plan: free
     region: oregon
     buildCommand: npm run build
